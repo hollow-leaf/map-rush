@@ -1,6 +1,7 @@
 import { useRef, useEffect } from 'react'
 import mapboxgl from 'mapbox-gl'
 import 'mapbox-gl/dist/mapbox-gl.css'
+import { loadCarModelToMap } from './loadCarModel'
 
 // Read Mapbox access token from environment variable
 mapboxgl.accessToken = import.meta.env.VITE_MAPBOX_ACCESS_TOKEN
@@ -47,6 +48,12 @@ export default function MapComponent() {
           }
         },
         labelLayerId
+      )
+      // Use the new utility to load the car model
+      loadCarModelToMap(
+        mapRef.current,
+        -74.006, 40.7128, // Example coordinates
+        '/src/assets/chicken.glb'
       )
     })
     // Clean up on unmount
