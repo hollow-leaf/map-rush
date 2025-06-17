@@ -16,6 +16,7 @@ interface CustomLayer {
     rotateZ: number;
     scale: number;
   };
+  onAdd: (map: mapboxgl.Map, gl: WebGLRenderingContext) => Promise<void>;
   // If CustomLayerImplementation from loadCarModel.ts has other properties like
   // camera, scene, renderer, onAdd, render, they should be listed here too for consistency,
   // or this interface should be imported/shared. For now, only modelTransform is critical.
@@ -31,22 +32,36 @@ const GameController = ({ map }: GameControllerProps) => {
   const [speed, setSpeed] = useState(0.0001); // Normal speed
   const [isSprinting, setIsSprinting] = useState(false); // Sprint state
   const animationFrameIdRef = useRef<number | null>(null); // Ref to store animation frame id
+  const [isModelLoaded, setIsModelLoaded] = useState(false);
 
   // Effect to load the model once
   useEffect(() => {
     if (map && !modelLayerRef.current) {
+      console.log('Attempting to load model...');
       const layer = loadCarModelToMap(
         map,
         modelPositionRef.current.lng,
         modelPositionRef.current.lat,
-        '/assets/chicken.glb' // Corrected path
+        '/assets/chicken.glb'
       );
-      modelLayerRef.current = layer;
+      
+      if (layer) {
+        modelLayerRef.current = layer;
+        // Wait for the model to be loaded
+        layer.onAdd(map, map.getCanvas().getContext('webgl')!).then(() => {
+          console.log('Model loaded successfully');
+          setIsModelLoaded(true);
+        }).catch((error: Error) => {
+          console.error('Failed to load model:', error);
+        });
+      }
     }
   }, [map]);
 
   // Effect for animation loop
   useEffect(() => {
+    if (!isModelLoaded) return;
+
     const animate = () => {
       if (map && modelLayerRef.current && modelLayerRef.current.modelTransform) {
         const newMercatorPosition = mapboxgl.MercatorCoordinate.fromLngLat(
@@ -67,7 +82,7 @@ const GameController = ({ map }: GameControllerProps) => {
         cancelAnimationFrame(animationFrameIdRef.current);
       }
     };
-  }, [map]);
+  }, [map, isModelLoaded]);
 
 
   useEffect(() => {

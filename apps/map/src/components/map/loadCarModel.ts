@@ -10,7 +10,7 @@ interface CustomLayer {
   camera: THREE.Camera
   scene: THREE.Scene
   renderer: THREE.WebGLRenderer
-  onAdd: (map: any, gl: any) => void
+  onAdd: (map: mapboxgl.Map, gl: WebGLRenderingContext) => Promise<void>
   render: (gl: any, matrix: number[]) => void
 }
 
@@ -76,8 +76,8 @@ export function loadCarModelToMap(
       canvas: map.getCanvas(),
       context: map.getCanvas().getContext('webgl')!,
     }),
-    modelTransform: modelTransform, // Assign modelTransform here
-    onAdd: function (map: any, gl: any) {
+    modelTransform: modelTransform,
+    onAdd: function (map: mapboxgl.Map, gl: WebGLRenderingContext): Promise<void> {
       this.renderer.autoClear = false;
 
       // Add directional lights if they haven't been added yet
@@ -91,24 +91,28 @@ export function loadCarModelToMap(
         this.scene.add(directionalLight2);
       }
 
-      // Load the 3D model only if it hasn't been loaded yet
-      if (this.scene.children.filter(c => c.type === 'Scene').length === 0) {
-        const loader = new GLTFLoader();
-        console.log('Loading model from:', modelUrl);
+      // Load the 3D model
+      const loader = new GLTFLoader();
+      console.log('Loading model from:', modelUrl);
+      
+      // Create a promise to handle model loading
+      return new Promise((resolve, reject) => {
         loader.load(
           modelUrl,
           (gltf) => {
             console.log('Model loaded successfully:', gltf);
             this.scene.add(gltf.scene);
+            resolve();
           },
           (progress) => {
             console.log('Loading progress:', (progress.loaded / progress.total) * 100, '%');
           },
           (error) => {
             console.error('Error loading model:', error);
+            reject(error);
           }
         );
-      }
+      });
     },
     render: function (gl: any, matrix: number[]) {
       const mt = this.modelTransform;
@@ -153,5 +157,5 @@ export function loadCarModelToMap(
 
   // Add the layer to the map
   map.addLayer(customLayer)
-  return customLayer // Return the custom layer instance
+  return customLayer
 }
