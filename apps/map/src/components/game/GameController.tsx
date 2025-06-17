@@ -42,13 +42,13 @@ const GameController = ({ map }: GameControllerProps) => {
         map,
         modelPositionRef.current.lng,
         modelPositionRef.current.lat,
-        '/assets/chicken.glb'
+        'https://docs.mapbox.com/mapbox-gl-js/assets/34M_17/34M_17.gltf'  // Using Mapbox example model
       );
       
       if (layer) {
         modelLayerRef.current = layer;
         // Wait for the model to be loaded
-        layer.onAdd(map, map.getCanvas().getContext('webgl')!).then(() => {
+        layer.onAdd(map, map.painter.context.gl).then(() => {
           console.log('Model loaded successfully');
           setIsModelLoaded(true);
         }).catch((error: Error) => {
