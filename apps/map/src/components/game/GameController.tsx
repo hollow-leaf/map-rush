@@ -9,10 +9,10 @@ interface GameControllerProps {
 
 const GameController = ({ map }: GameControllerProps) => {
   const modelPositionRef = useRef({ lng: -74.006, lat: 40.7128 }); // Initial position, will be updated by Babylon
+  const initialLngLatRef = useRef({ lng: -74.0060, lat: 40.7128 }); // Default starting point on map
   const babylonGameRef = useRef<BabylonGame | null>(null);
-  // const [speed, setSpeed] = useState(0.0001); // Speed is now managed by BabylonGame
-  // const [isSprinting, setIsSprinting] = useState(false); // Sprint state also managed by BabylonGame if needed
-  const animationFrameIdRef = useRef<number | null>(null);
+  const [isSprinting, setIsSprinting] = useState(false); // State for sprint status
+  // const animationFrameIdRef = useRef<number | null>(null); // Will be removed as onCarMoved handles updates
   const [isModelLoaded, setIsModelLoaded] = useState(false);
   const [isLoadingModel, setIsLoadingModel] = useState(false);
   const [cameraView, setCameraView] = useState<'ground' | 'sky'>('sky');
@@ -23,9 +23,43 @@ const GameController = ({ map }: GameControllerProps) => {
       const game = new BabylonGame();
       babylonGameRef.current = game;
 
+      // Assign the onCarMoved callback
+      game.onCarMoved = (currentBabylonPosition, isSprintingUpdate) => {
+        setIsSprinting(isSprintingUpdate);
+
+        if (!map || !babylonGameRef.current) return;
+
+        const babylonOrigin = babylonGameRef.current.getBabylonOrigin();
+        if (!babylonOrigin) return;
+
+        const worldScale = 1.0; // Should match BabylonGame's worldScale or be passed from there.
+
+        const displacementInBabylonUnits = currentBabylonPosition.subtract(babylonOrigin);
+
+        const metersPerDegreeLat = 111111;
+        const metersPerDegreeLng = 111111 * Math.cos(initialLngLatRef.current.lat * Math.PI / 180);
+
+        // Assuming Babylon world +Z is North, and +X is East for map alignment.
+        // This needs to be verified against the actual setup.
+        const newLat = initialLngLatRef.current.lat + (displacementInBabylonUnits.z * worldScale) / metersPerDegreeLat;
+        const newLng = initialLngLatRef.current.lng + (displacementInBabylonUnits.x * worldScale) / metersPerDegreeLng;
+        
+        map.setCenter([newLng, newLat]);
+        modelPositionRef.current = {lng: newLng, lat: newLat}; // Update UI ref
+
+        const carRotationQuaternion = babylonGameRef.current.getCarRotationQuaternion();
+        if (carRotationQuaternion) {
+            const eulerAngles = carRotationQuaternion.toEulerAngles();
+            const yawDegrees = eulerAngles.y * 180 / Math.PI;
+            // Assuming Babylon's 0 yaw (car facing +Z) is North.
+            // Mapbox bearing: 0 is North, positive is clockwise.
+            // If Babylon's positive rotation (around Y) is counter-clockwise, then negative is needed.
+            map.setBearing(-yawDegrees); 
+        }
+      };
+
       const mapCanvas = map.getCanvas();
-      game.initialize(mapCanvas);
-      babylonGameRef.current = game; // Ensure ref is set before checks if game is local var
+      game.initialize(mapCanvas, false); // Pass false to prevent auto render loop
       game.runBasicChecks(); // Initial checks
 
       game.loadModel('https://docs.mapbox.com/mapbox-gl-js/assets/34M_17/34M_17.gltf')
@@ -73,8 +107,9 @@ const GameController = ({ map }: GameControllerProps) => {
               // The runRenderLoop in BabylonGame should be the primary render driver.
               // This render function here is more of a Mapbox requirement.
               // We might only need to trigger a repaint if the map itself needs to update based on babylon changes.
-              // engine.wipeCaches(true); // This can be performance intensive
-              // scene.render(true, false); // This might not be needed if babylon render loop is active
+              engine.wipeCaches(true); // Good for state management, as suggested
+              scene.render(true, false); // Explicitly render the scene here
+              
               map.triggerRepaint(); // Ensure Mapbox updates if its state changes or needs to redraw
             }
           },
@@ -102,41 +137,12 @@ const GameController = ({ map }: GameControllerProps) => {
             }
         }
     };
-  }, [map]); // Removed setIsLoadingModel, setIsModelLoaded from deps as they are set inside
+  }, [map]); 
 
-  // Effect for updating UI and map center from Babylon model position
-  useEffect(() => {
-    if (!isModelLoaded || !babylonGameRef.current || !map) return;
-
-    const gameLoop = () => {
-      const carPosition = babylonGameRef.current?.getCarPosition();
-      if (carPosition) {
-        // TODO: Implement proper coordinate transformation from Babylon to LngLat
-        // This is a placeholder and will not correctly reflect position on the map.
-        // For example:
-        // const { x, z } = carPosition; // Assuming x, z are ground plane in Babylon
-        // modelPositionRef.current = { lng: x, lat: z }; // Incorrect mapping
-        
-        // For UI display, if needed:
-        // setSomeUiState(modelPositionRef.current.lng, modelPositionRef.current.lat);
-
-        // For map centering (requires correct LngLat):
-        // const newLngLat = convertBabylonToLngLat(carPosition); // Needs implementation
-        // if (newLngLat) {
-        //   map.setCenter(newLngLat);
-        //   modelPositionRef.current = newLngLat; // Update ref for UI
-        // }
-      }
-      animationFrameIdRef.current = requestAnimationFrame(gameLoop);
-    };
-    animationFrameIdRef.current = requestAnimationFrame(gameLoop);
-
-    return () => {
-      if (animationFrameIdRef.current) {
-        cancelAnimationFrame(animationFrameIdRef.current);
-      }
-    };
-  }, [map, isModelLoaded]);
+  // The useEffect for gameLoop that previously updated modelPositionRef for UI (and potentially map center)
+  // is now replaced by the logic within game.onCarMoved.
+  // If any other per-frame updates are needed in GameController, a separate useEffect/gameLoop can be used,
+  // but for map centering and model position display, onCarMoved is the new driver.
 
   const handleMove = (direction: 'up' | 'down' | 'left' | 'right') => {
     // Keyboard controls are now handled by BabylonGame.
@@ -149,23 +155,34 @@ const GameController = ({ map }: GameControllerProps) => {
   };
 
   const setMapView = (view: 'ground' | 'sky') => {
-    setCameraView(view);
-    let cameraOptions: Partial<mapboxgl.CameraOptions & mapboxgl.AnimationOptions>;
+    setCameraView(view); // This updates the local state for button styling
 
+    if (babylonGameRef.current) {
+        babylonGameRef.current.setCameraViewType(view);
+    }
+
+    // The existing Mapbox map.easeTo logic can remain if you want Mapbox's 2D map
+    // to also change its pitch/zoom, or it can be removed if Babylon view is primary.
+    // For now, let's assume the Babylon camera is the primary 3D view control.
+    // The Mapbox camera settings here might conflict or be redundant if the primary
+    // interaction is meant to be through the Babylon view.
+    // We will keep it for now, but it might need adjustment based on desired behavior.
+    
+    let cameraOptions: Partial<mapboxgl.CameraOptions & mapboxgl.AnimationOptions>;
     // Get current center from modelPositionRef which should be updated by Babylon's car
     const currentCenter: [number, number] = [modelPositionRef.current.lng, modelPositionRef.current.lat];
 
     if (view === 'sky') {
       cameraOptions = {
-        pitch: 45,
-        zoom: 15, 
+        pitch: 45, // Mapbox pitch
+        zoom: 15,  // Mapbox zoom
         center: currentCenter,
         duration: 1000,
       };
-    } else { 
+    } else { // ground
       cameraOptions = {
-        pitch: 70,
-        zoom: 20,  
+        pitch: 70, // Mapbox pitch
+        zoom: 18,  // Mapbox zoom (closer for ground view)
         center: currentCenter,
         duration: 1000,
       };
@@ -177,8 +194,7 @@ const GameController = ({ map }: GameControllerProps) => {
     <>
       {isLoadingModel && <p className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 bg-white p-4 rounded shadow z-50">Loading 3D Model...</p>}
       <div className="absolute top-4 left-4 bg-white p-2 rounded shadow z-50">
-        {/* Speed and Sprinting state are now managed within BabylonGame.tsx, UI needs to reflect that if desired */}
-        {/* <p>Speed: {isSprinting ? 'Sprinting' : 'Normal'}</p> */}
+        <p>Status: {isSprinting ? 'Sprinting' : 'Normal Speed'}</p>
         <p className="text-xs">Lng: {modelPositionRef.current.lng.toFixed(4)} (Mapbox)</p>
         <p className="text-xs">Lat: {modelPositionRef.current.lat.toFixed(4)} (Mapbox)</p>
         {babylonGameRef.current?.getCarPosition() && (
