@@ -1,7 +1,7 @@
 import React, { useEffect, useRef, useState } from 'react';
 import maplibregl, { CustomLayerInterface, Map as MaplibreMap } from 'maplibre-gl';
 import { BabylonGame } from '../../lib/BabylonGame';
-import { Matrix, Vector3, HemisphericLight, Tools, Scene } from '@babylonjs/core';
+import { Matrix, Vector3, Scene } from '@babylonjs/core'; // Removed HemisphericLight, Tools
 
 // Define the structure for the BabylonLayer to hold the game instance
 interface BabylonLayerType extends CustomLayerInterface {
@@ -22,7 +22,7 @@ class BabylonLayerImpl implements BabylonLayerType {
         this.renderingMode = '3d';
     }
 
-    async onAdd(map: MaplibreMap, gl: WebGLRenderingContext) {
+    async onAdd(map: MaplibreMap, _gl: WebGLRenderingContext) { // gl context not directly used by BabylonGame initialize
         this.map = map;
         const mapCanvas = map.getCanvas();
         this.babylonGame = new BabylonGame();
@@ -30,15 +30,10 @@ class BabylonLayerImpl implements BabylonLayerType {
         // Initialize BabylonGame, but don't start its own render loop
         this.babylonGame.initialize(mapCanvas, false); 
         
-        // Add a light if not already present (BabylonGame adds one, this is illustrative)
-        // if (this.babylonGame.getScene()) {
-        //   new HemisphericLight("hemiLight", new Vector3(0, 1, 0), this.babylonGame.getScene()!);
-        // }
-
         try {
-            // Load the 3D model
-            await this.babylonGame.loadModel('https://maplibre.org/maplibre-gl-js/docs/assets/low_poly_truck/scene.gltf');
-            console.log("Babylon model loaded successfully by BabylonLayer.");
+            // Load the 3D model using the new method in BabylonGame
+            await this.babylonGame.loadCarModelAndSetup('https://maplibre.org/maplibre-gl-js/docs/assets/low_poly_truck/scene.gltf');
+            console.log("Babylon model loaded and setup successfully by BabylonLayer.");
 
             // Setup keyboard controls after model is loaded
             this.babylonGame.setupKeyboardControls();
@@ -48,33 +43,26 @@ class BabylonLayerImpl implements BabylonLayerType {
         }
     }
 
-    render(gl: WebGLRenderingContext, matrix: number[]) {
-        if (!this.babylonGame || !this.babylonGame.getScene() || !this.babylonGame.getEngine() || !this.babylonGame.getCarModel()) {
-            // console.warn("Babylon components not ready for rendering or model not loaded.");
-            if (this.map) this.map.triggerRepaint(); // Still trigger repaint to keep map responsive
+    render(_gl: WebGLRenderingContext, matrix: number[]) { // gl context not directly used
+        if (!this.babylonGame || !this.babylonGame.getSceneInstance() || !this.babylonGame.getEngineInstance() || !this.babylonGame.getCarModel()) {
+            if (this.map) this.map.triggerRepaint();
             return;
         }
 
-        const scene = this.babylonGame.getScene() as Scene; // scene is now guaranteed by the check
-        const engine = this.babylonGame.getEngine()!; // engine is now guaranteed
+        const scene = this.babylonGame.getSceneInstance() as Scene; // scene is now guaranteed
+        // const engine = this.babylonGame.getEngineInstance()!; // engine is guaranteed but not directly used here after refactor
 
-        if (scene.activeCamera) {
-            // Create MapLibre matrix from array
+        // The active camera is now managed within BabylonCamera, accessed via babylonGame
+        const activeCamera = this.babylonGame.babylonCamera?.getActiveCamera();
+
+        if (activeCamera) {
             const maplibreMatrix = Matrix.FromArray(matrix);
-            
-            // Update Babylon camera
-            // The MapLibre example uses freezeProjectionMatrix.
-            // It implies that MapLibre controls the projection and view matrices.
-            scene.activeCamera.freezeProjectionMatrix(maplibreMatrix);
-
-            // Render the Babylon scene
+            activeCamera.freezeProjectionMatrix(maplibreMatrix);
             this.babylonGame.renderScene();
-        } else {
-            // console.warn("Babylon scene has no active camera.");
         }
         
         if (this.map) {
-            this.map.triggerRepaint(); // Ensure MapLibre GL JS continues its render loop.
+            this.map.triggerRepaint();
         }
     }
 
@@ -88,68 +76,74 @@ class BabylonLayerImpl implements BabylonLayerType {
 }
 
 interface BabylonMapControllerProps {
-  map: MaplibreMap | null; // Accept null initially
+  map: MaplibreMap | null; 
 }
 
 const BabylonMapController: React.FC<BabylonMapControllerProps> = ({ map }) => {
   const babylonLayerRef = useRef<BabylonLayerImpl | null>(null);
-  const babylonGameInstanceRef = useRef<BabylonGame | null>(null);
+  const babylonGameInstanceRef = useRef<BabylonGame | null>(null); // Still useful for direct calls from UI
   const [modelPosition, setModelPosition] = useState<{ lng: number, lat: number, babylonX: number, babylonZ: number } | null>(null);
-  const [cameraView, setCameraView] = useState<'ground' | 'sky'>('sky'); // Default to 'sky' view
-  const [isLoading, setIsLoading] = useState(true); // For loading indicator
+  const [cameraView, setCameraView] = useState<'ground' | 'sky'>('sky'); 
+  const [isLoading, setIsLoading] = useState(true);
 
-  // Effect to add and remove the Babylon layer
   useEffect(() => {
     if (map && !babylonLayerRef.current) {
       console.log("Map instance available. Adding BabylonLayer.");
       const layer = new BabylonLayerImpl('babylon-custom-layer');
       babylonLayerRef.current = layer;
+      
+      // Asynchronously add layer and then try to get game instance.
+      // onAdd is async, so babylonGame might not be immediately available.
       map.addLayer(layer);
-      
-      // Store the babylonGame instance once it's created in onAdd
-      // This requires a bit of a workaround or direct access if onAdd is synchronous enough
-      // For now, we'll assume onAdd completes and sets babylonGame on the layer instance
-      // A better approach might be for onAdd to return the game instance or use a callback
-      
-      // Attempt to get game instance after a short delay or via a callback if possible
-      // For simplicity, directly accessing after addLayer. onAdd is async due to loadModel.
-      // We need a way to get the babylonGame instance to the React component.
-      // Modify BabylonLayerImpl to store babylonGame instance and provide a getter or make it public.
-      
-      // Polling for babylonGame instance (simple way, can be improved with promises/callbacks)
-      const intervalId = setInterval(() => {
-        if (babylonLayerRef.current?.babylonGame) {
-          babylonGameInstanceRef.current = babylonLayerRef.current.babylonGame;
-          setIsLoading(false); // Model loading is part of onAdd, so consider it loaded here
-          console.log("BabylonGame instance captured in React component.");
-          
-          // Setup position update callback
-          babylonGameInstanceRef.current.onCarMoved = (pos, isSprinting) => {
-            // TODO: Coordinate transformation needed here
-            // For now, just display Babylon coords and dummy LngLat
-            setModelPosition({ lng: -74.006, lat: 40.7128, babylonX: pos.x, babylonZ: pos.z });
-          };
-          clearInterval(intervalId);
-        }
-      }, 100);
 
+      const setupGameLink = async () => {
+        // Wait for babylonGame to be initialized within the layer
+        // This polling mechanism is kept, but consider promises/callbacks from onAdd if possible in future refactor of layer itself
+        let attempts = 0;
+        const maxAttempts = 50; // Try for 5 seconds (50 * 100ms)
+        const intervalId = setInterval(async () => {
+          attempts++;
+          if (babylonLayerRef.current?.babylonGame && babylonLayerRef.current.babylonGame.getCarModel()) {
+            babylonGameInstanceRef.current = babylonLayerRef.current.babylonGame;
+            setIsLoading(false);
+            console.log("BabylonGame instance (with model) captured in React component.");
+            
+            // Setup position update callback from the main BabylonGame instance
+            babylonGameInstanceRef.current.onCarMoved = (pos, _isSprinting) => {
+              // TODO: Coordinate transformation needed here
+              setModelPosition({ lng: -74.006, lat: 40.7128, babylonX: pos.x, babylonZ: pos.z });
+            };
+            clearInterval(intervalId);
+          } else if (babylonLayerRef.current?.babylonGame && !babylonLayerRef.current.babylonGame.getCarModel()) {
+            // Game instance is there, but model not yet. This is normal during async load.
+            // The isLoading state will remain true until model is confirmed.
+            // console.log("BabylonGame instance captured, waiting for model...");
+          } else if (attempts > maxAttempts) {
+            console.error("Failed to capture BabylonGame instance after multiple attempts.");
+            setIsLoading(false); // Stop loading indicator to prevent infinite loading state
+            clearInterval(intervalId);
+          }
+        }, 100);
+      };
+
+      setupGameLink();
 
       return () => {
         console.log("Cleaning up BabylonMapController: Removing layer.");
-        clearInterval(intervalId);
+        // clearInterval is handled by setupGameLink's scope if interval is still running
         if (map && babylonLayerRef.current && map.getLayer(babylonLayerRef.current.id)) {
-          map.removeLayer(babylonLayerRef.current.id);
-          // onRemove on the layer instance should be called by map.removeLayer
+          map.removeLayer(babylonLayerRef.current.id); 
         }
-        babylonLayerRef.current = null; // Clear the ref
+        babylonLayerRef.current = null; 
         babylonGameInstanceRef.current = null;
       };
     }
-  }, [map]); // Rerun if map instance changes
+  }, [map]);
 
   const handleSetCameraView = (view: 'sky' | 'ground') => {
     setCameraView(view);
     if (babylonGameInstanceRef.current) {
+      // Call new method on BabylonGame, which delegates to BabylonCamera
       babylonGameInstanceRef.current.setCameraViewType(view);
     } else {
       console.warn("BabylonGame instance not available to set camera view.");
@@ -158,6 +152,7 @@ const BabylonMapController: React.FC<BabylonMapControllerProps> = ({ map }) => {
 
   const handleMove = (direction: 'up' | 'down' | 'left' | 'right') => {
     if (babylonGameInstanceRef.current) {
+      // Calls new methods on BabylonGame, which delegate to BabylonControls
       switch (direction) {
         case 'up':
           babylonGameInstanceRef.current.triggerMovement('forward');
@@ -230,7 +225,7 @@ const BabylonMapController: React.FC<BabylonMapControllerProps> = ({ map }) => {
           </button>
           <button
             aria-label="Move Down"
-            className="bg-gray-700 hover:bg-gray-600 text-white font-bold p-3 text-xl" // No rounded-b for this one to merge visually
+            className="bg-gray-700 hover:bg-gray-600 text-white font-bold p-3 text-xl" 
             onClick={() => handleMove('down')}
           >
             ▼
