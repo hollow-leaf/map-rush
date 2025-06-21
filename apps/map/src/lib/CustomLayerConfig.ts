@@ -3,6 +3,8 @@ export interface ModelConfig {
   baseScale?: { x: number; y: number; z: number }; // Optional: if we want to scale the model
   positionOffset?: { x: number; y: number; z: number }; // Optional: for fine-tuning position relative to map coordinates
   rotationOffset?: { x: number; y: number; z: number }; // Optional: for adjusting initial orientation
+  worldOrigin?: [number, number]; // Optional: LngLat array for the model's world origin
+  worldAltitude?: number; // Optional: Altitude for the model's world origin
 }
 
 export interface CustomLayerSettings {
@@ -26,6 +28,8 @@ export const defaultCustomLayerSettings: CustomLayerSettings = {
       baseScale: { x: 1.5, y: 1.5, z: 1.5 },
       positionOffset: { x: 0, y: 0.5, z: 0 }, // Move up slightly on Y-axis
       rotationOffset: { x: 0, y: 45, z: 0 },   // Rotate 45 degrees around Y-axis
+      worldOrigin: [-74.006, 40.7128], // Default origin from example
+      worldAltitude: 0, // Default altitude from example
     },
     // Add more models here if needed
     // {
