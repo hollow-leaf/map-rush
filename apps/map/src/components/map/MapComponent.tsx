@@ -1,59 +1,49 @@
-import { useRef, useEffect } from 'react'
-import maplibregl , { Map as MaplibreMap } from 'maplibre-gl'
-import 'maplibre-gl/dist/maplibre-gl.css'
-import * as BABYLON from '@babylonjs/core';
-import '@babylonjs/loaders'
-import { BabylonLayerImpl } from './BabylonMapLayer';
+import { useRef, useEffect } from 'react'; // Added useState
+import maplibregl from 'maplibre-gl';
+import 'maplibre-gl/dist/maplibre-gl.css';
+import BabylonLayerImpl from './BabylonMapLayer'; // Default import
 
-interface CustomLayerWithBabylonResources extends maplibregl.CustomLayerInterface {
-    babylonScene?: BABYLON.Scene;
-    babylonCamera?: BABYLON.Camera;
-    babylonEngine?: BABYLON.Engine;
-}
+export default function MapComponent({ onMapReady }: { onMapReady: (map: maplibregl.Map) => void }) {
+  const mapContainer = useRef<HTMLDivElement>(null);
+  const mapRef = useRef<maplibregl.Map | null>(null);
+  const babylonLayerRef = useRef<BabylonLayerImpl | null>(null); // To hold the instance of our layer
 
-interface BabylonMapControllerProps {
-  map: MaplibreMap | null; 
-}
+  const MAPTILER_KEY = import.meta.env.VITE_MAPTILER_KEY;
 
-
-export default function MapComponent( { onMapReady }: { onMapReady: (map: maplibregl.Map) => void } ) {
-  // Ref for the map container
-  const mapContainer = useRef<HTMLDivElement>(null)
-  const mapRef = useRef<maplibregl.Map | null>(null)
-  const MAPTILER_KEY = import.meta.env.VITE_MAPTILER_KEY // Use MapTiler key for vector tiles
-  const babylonEngineInstanceRef = useRef<BABYLON.Engine | null>(null);
-      // To store references to scene and camera for cleanup and render logic
-  const babylonResourcesRef = useRef<{ scene?: BABYLON.Scene, camera?: BABYLON.Camera }>({});
-
-  const babylonLayerRef = useRef<BabylonLayerImpl | null>(null);
-  const babylonLayer = new BabylonLayerImpl('babylon-custom-layer');
-  
   useEffect(() => {
-    if (mapRef.current || !mapContainer.current) return
-    // Initialize the map
+    if (mapRef.current || !mapContainer.current) return;
+
     mapRef.current = new maplibregl.Map({
       container: mapContainer.current,
       style: 'https://demotiles.maplibre.org/style.json',
-      center: [ -74.006, 40.7128 ], // New York City
+      center: [-74.006, 40.7128], // New York City
       zoom: 15,
-      pitch: 60, // Tilt the map for 3D effect
+      pitch: 60,
       bearing: -17.6,
-      antialias: true
-    })
-    // Add 3D buildings layer when the map loads
+      antialias: true,
+    });
+
     mapRef.current.on('load', () => {
-      if (!mapRef.current) return
-      const layers = mapRef.current.getStyle().layers
-      // Find the label layer to insert 3D buildings below it
+      if (!mapRef.current) return;
+
+      const layerId = 'babylon-custom-layer';
+      const modelConfigIdx = 0; // Use the first model config from customLayerConfig.ts
+      const babylonCustomLayer = new BabylonLayerImpl(layerId, modelConfigIdx);
+      babylonLayerRef.current = babylonCustomLayer; // Store the instance if needed
+
+      mapRef.current.addLayer(babylonCustomLayer);
+      console.log("Babylon custom layer added to map.");
+
+      const layers = mapRef.current.getStyle().layers;
       const labelLayerId = layers?.find(
         (layer) => layer.type === 'symbol' && layer.layout?.['text-field']
-      )?.id
+      )?.id;
+
       mapRef.current.addSource('openmaptiles', {
         type: 'vector',
-        url: `https://api.maptiler.com/tiles/v3/tiles.json?key=${MAPTILER_KEY}`, // Use a public vector tile source
-      })
-      mapRef.current.addLayer(babylonLayer)
-      // Add 3D buildings
+        url: `https://api.maptiler.com/tiles/v3/tiles.json?key=${MAPTILER_KEY}`,
+      });
+
       mapRef.current.addLayer(
         {
           id: '3d-buildings',

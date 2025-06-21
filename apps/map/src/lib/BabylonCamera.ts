@@ -1,4 +1,4 @@
-import { FreeCamera, Vector3, Scene, AbstractMesh, Matrix, Quaternion } from '@babylonjs/core';
+import { FreeCamera, Vector3, Scene, AbstractMesh, Quaternion } from '@babylonjs/core';
 
 export class BabylonCamera {
     public instance: FreeCamera | null = null;
@@ -22,11 +22,6 @@ export class BabylonCamera {
         this.instance = new FreeCamera("camera1", new Vector3(0, 5, -10), this.scene); // Default position
         this.instance.fov = Math.PI / 4; // Set FOV
         this.instance.setTarget(Vector3.Zero()); // Default target
-        
-        // console.log("BabylonCamera: Initialized.");
-        // console.log("  Initial Position:", this.instance.position.toString());
-        // console.log("  Initial Target:", this.instance.getTarget().toString());
-        // console.log("  FOV:", this.instance.fov);
 
         this.instance.attachControl(this.canvas, true); 
     }
