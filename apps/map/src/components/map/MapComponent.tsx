@@ -1,21 +1,21 @@
 import { useRef, useEffect } from 'react'
-import mapboxgl from 'mapbox-gl'
-import 'mapbox-gl/dist/mapbox-gl.css'
+import maplibregl from 'maplibre-gl'
+import 'maplibre-gl/dist/maplibre-gl.css'
 
 // Read Mapbox access token from environment variable
-mapboxgl.accessToken = import.meta.env.VITE_MAPBOX_ACCESS_TOKEN
+// maplibregl.accessToken = import.meta.env.VITE_MAPBOX_ACCESS_TOKEN // MapLibre typically does not require an access token for open styles
 
-export default function MapComponent( { onMapReady }: { onMapReady: (map: mapboxgl.Map) => void } ) {
+export default function MapComponent( { onMapReady }: { onMapReady: (map: maplibregl.Map) => void } ) {
   // Ref for the map container
   const mapContainer = useRef<HTMLDivElement>(null)
-  const mapRef = useRef<mapboxgl.Map | null>(null)
+  const mapRef = useRef<maplibregl.Map | null>(null)
 
   useEffect(() => {
     if (mapRef.current || !mapContainer.current) return
     // Initialize the map
-    mapRef.current = new mapboxgl.Map({
+    mapRef.current = new maplibregl.Map({
       container: mapContainer.current,
-      style: 'mapbox://styles/mapbox/streets-v12',
+      style: 'https://demotiles.maplibre.org/style.json',
       center: [ -74.006, 40.7128 ], // New York City
       zoom: 15,
       pitch: 60, // Tilt the map for 3D effect

@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState } from 'react';
-import mapboxgl, { CustomLayerInterface } from 'mapbox-gl'; // Import CustomLayerInterface
+// import mapboxgl, { CustomLayerInterface } from 'mapbox-gl'; // Import CustomLayerInterface
 import { BabylonGame } from '../../lib/BabylonGame';
 // import { loadBabylonModel } from '../map/loadBabylonModel'; // This function might be simplified or its role changed
 

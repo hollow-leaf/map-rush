@@ -43,6 +43,7 @@ export class BabylonGame {
 
         // Basic camera setup
         this.camera = new FreeCamera("camera1", new Vector3(0, 5, -10), this.scene);
+        this.camera.fov = Math.PI / 4; // Set FOV
         this.camera.setTarget(Vector3.Zero());
         this.camera.attachControl(this.canvas, true);
 
@@ -215,6 +216,72 @@ export class BabylonGame {
         });
     }
 
+    public triggerMovement(direction: 'forward' | 'backward', isSprinting: boolean = false): void {
+        if (!this.carModel || !this.scene) return;
+
+        const speed = isSprinting ? this.sprintSpeed : this.normalSpeed;
+        const moveVector = direction === 'forward' ? new Vector3(0, 0, 1) : new Vector3(0, 0, -1);
+        const effectiveSpeed = direction === 'forward' ? speed : speed * 0.7; // Slower reverse
+
+        // Ensure rotationQuaternion is initialized
+        if (!this.carModel.rotationQuaternion) {
+            this.carModel.rotationQuaternion = Quaternion.FromEulerVector(this.carModel.rotation);
+        }
+
+        const previousPosition = this.carModel.position.clone();
+        const worldMoveVector = Vector3.Zero();
+        this.carModel.rotationQuaternion.toRotationMatrix(Matrix.IdentityReadOnly).transformCoordinates(moveVector, worldMoveVector);
+        this.carModel.position.addInPlace(worldMoveVector.scale(effectiveSpeed));
+
+        this.carModel.computeWorldMatrix(true);
+        let collisionDetected = false;
+        const carBoundingBox = this.carModel.getBoundingInfo().boundingBox;
+        for (const obstacle of this.obstacles) {
+            if (carBoundingBox.intersects(obstacle.getBoundingInfo().boundingBox)) {
+                collisionDetected = true;
+                break;
+            }
+        }
+
+        if (collisionDetected) {
+            this.carModel.position = previousPosition;
+            this.carModel.computeWorldMatrix(true);
+        } else {
+            this.updateCameraPosition(); // Update camera if movement was successful
+            if (this.onCarMoved) {
+                this.onCarMoved(this.carModel.getAbsolutePosition(), isSprinting);
+            }
+        }
+    }
+
+    public triggerRotation(direction: 'left' | 'right'): void {
+        if (!this.carModel || !this.scene) return;
+
+        // Ensure rotationQuaternion is initialized
+        if (!this.carModel.rotationQuaternion) {
+            this.carModel.rotationQuaternion = Quaternion.FromEulerVector(this.carModel.rotation);
+        }
+        
+        const previousRotation = this.carModel.rotationQuaternion.clone(); // Though not used for collision reversion here
+        const rotationAngle = direction === 'left' ? -this.rotationSpeed : this.rotationSpeed;
+        this.carModel.rotationQuaternion = Quaternion.FromAxisAngle(Vector3.UpReadOnly, rotationAngle).multiply(this.carModel.rotationQuaternion);
+
+        // Note: Collision detection on pure rotation is often skipped unless the model is very large or pivots unusually.
+        // If rotation can cause collision due to model shape, add collision check here similar to triggerMovement.
+        // For simplicity, matching current keyboard control behavior which also doesn't check collision on pure rotation.
+        // If collision on rotation was needed:
+        // this.carModel.computeWorldMatrix(true);
+        // ... collision check ...
+        // if (collisionDetected) { this.carModel.rotationQuaternion = previousRotation; this.carModel.computeWorldMatrix(true); return; }
+
+
+        this.updateCameraPosition(); // Update camera after rotation
+        if (this.onCarMoved) {
+            // Pass false for isSprinting as rotation doesn't involve sprinting.
+            this.onCarMoved(this.carModel.getAbsolutePosition(), false);
+        }
+    }
+
     public setCameraViewType(viewType: 'sky' | 'ground'): void {
         this.activeCameraView = viewType;
         // Immediate position update. If performance becomes an issue, could be throttled or only updated in render loop.
@@ -294,6 +361,12 @@ export class BabylonGame {
 
     public getCarRotationQuaternion(): Quaternion | null {
         return this.carModel ? this.carModel.rotationQuaternion : null;
+    }
+
+    public renderScene(): void {
+        if (this.scene) {
+            this.scene.render();
+        }
     }
 
     public runBasicChecks(): void {
