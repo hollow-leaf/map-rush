@@ -57,8 +57,21 @@ export class BabylonCamera {
         // Ensure carModel has rotationQuaternion, default to Euler if not.
         const carRotationQuaternion = this.carModel.rotationQuaternion ? this.carModel.rotationQuaternion : Quaternion.FromEulerVector(this.carModel.rotation);
         
-        const rotationMatrix = Matrix.RotationQuaternion(carRotationQuaternion);
-        worldOffset = Vector3.TransformCoordinates(cameraPositionInCarSpace, rotationMatrix);
+        if (carWorldMatrix) {
+            // Convert the camera position from car space to world space
+            worldOffset = Vector3.TransformCoordinates(cameraPositionInCarSpace, carWorldMatrix)
+                .add(this.carModel.getAbsolutePosition());
+        } else {
+            // Fallback if carWorldMatrix is not available
+            worldOffset = cameraPositionInCarSpace.add(this.carModel.getAbsolutePosition());
+        }
+        // Calculate the desired camera position in world space
+        // Use the car's absolute position to set the camera target
+        // This ensures the camera follows the car's position in the scene
+        if (!this.carModel.getAbsolutePosition) {
+            console.warn("Car model does not have an absolute position method, using local position instead.");
+            this.carModel.getAbsolutePosition = () => this.carModel.position;
+        }
         
         const desiredCameraPosition = this.carModel.getAbsolutePosition().add(worldOffset);
 

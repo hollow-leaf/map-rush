@@ -2,13 +2,11 @@ import { useRef, useEffect } from 'react'
 import maplibregl from 'maplibre-gl'
 import 'maplibre-gl/dist/maplibre-gl.css'
 
-// Read Mapbox access token from environment variable
-// maplibregl.accessToken = import.meta.env.VITE_MAPBOX_ACCESS_TOKEN // MapLibre typically does not require an access token for open styles
-
 export default function MapComponent( { onMapReady }: { onMapReady: (map: maplibregl.Map) => void } ) {
   // Ref for the map container
   const mapContainer = useRef<HTMLDivElement>(null)
   const mapRef = useRef<maplibregl.Map | null>(null)
+  const MAPTILER_KEY = import.meta.env.VITE_MAPTILER_KEY // Use MapTiler key for vector tiles
 
   useEffect(() => {
     if (mapRef.current || !mapContainer.current) return
@@ -30,20 +28,38 @@ export default function MapComponent( { onMapReady }: { onMapReady: (map: maplib
       const labelLayerId = layers?.find(
         (layer) => layer.type === 'symbol' && layer.layout?.['text-field']
       )?.id
+      mapRef.current.addSource('openmaptiles', {
+        type: 'vector',
+        url: `https://api.maptiler.com/tiles/v3/tiles.json?key=${MAPTILER_KEY}`, // Use a public vector tile source
+      })
       // Add 3D buildings
       mapRef.current.addLayer(
         {
           id: '3d-buildings',
-          source: 'composite',
+          source: 'openmaptiles',
           'source-layer': 'building',
-          filter: ['==', 'extrude', 'true'],
+          filter: ['!=', ['get', 'hide_3d'], true],
           type: 'fill-extrusion',
           minzoom: 15,
           paint: {
-            'fill-extrusion-color': '#aaa',
-            'fill-extrusion-height': ["get", "height"],
-            'fill-extrusion-base': ["get", "min_height"],
-            'fill-extrusion-opacity': 0.6
+            'fill-extrusion-color': [
+                      'interpolate',
+                      ['linear'],
+                      ['get', 'render_height'], 0, 'lightgray', 200, 'royalblue', 400, 'lightblue'
+                  ],
+                  'fill-extrusion-height': [
+                      'interpolate',
+                      ['linear'],
+                      ['zoom'],
+                      15,
+                      0,
+                      16,
+                      ['get', 'render_height']
+                  ],
+                  'fill-extrusion-base': ['case',
+                      ['>=', ['get', 'zoom'], 16],
+                      ['get', 'render_min_height'], 0
+                  ]
           }
         },
         labelLayerId
@@ -58,7 +74,7 @@ export default function MapComponent( { onMapReady }: { onMapReady: (map: maplib
       mapRef.current?.remove()
       mapRef.current = null
     }
-  }, [])
+  }, [MAPTILER_KEY, onMapReady])
 
   return (
     <div ref={mapContainer} className="w-full h-full" />

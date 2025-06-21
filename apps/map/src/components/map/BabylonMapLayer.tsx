@@ -32,7 +32,7 @@ class BabylonLayerImpl implements BabylonLayerType {
         
         try {
             // Load the 3D model using the new method in BabylonGame
-            await this.babylonGame.loadCarModelAndSetup('https://maplibre.org/maplibre-gl-js/docs/assets/low_poly_truck/scene.gltf');
+            await this.babylonGame.loadCarModelAndSetup('https://docs.mapbox.com/mapbox-gl-js/assets/34M_17/34M_17.gltf');
             console.log("Babylon model loaded and setup successfully by BabylonLayer.");
 
             // Setup keyboard controls after model is loaded
