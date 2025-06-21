@@ -9,7 +9,7 @@ interface BabylonLayerType extends CustomLayerInterface {
     map?: MaplibreMap; // Keep a reference to the map
 }
 
-class BabylonLayerImpl implements BabylonLayerType {
+export class BabylonLayerImpl implements BabylonLayerType {
     id: string;
     type: 'custom';
     renderingMode: '3d' | '2d';

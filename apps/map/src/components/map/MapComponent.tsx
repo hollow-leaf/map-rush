@@ -1,13 +1,33 @@
 import { useRef, useEffect } from 'react'
-import maplibregl from 'maplibre-gl'
+import maplibregl , { Map as MaplibreMap } from 'maplibre-gl'
 import 'maplibre-gl/dist/maplibre-gl.css'
+import * as BABYLON from '@babylonjs/core';
+import '@babylonjs/loaders'
+import { BabylonLayerImpl } from './BabylonMapLayer';
+
+interface CustomLayerWithBabylonResources extends maplibregl.CustomLayerInterface {
+    babylonScene?: BABYLON.Scene;
+    babylonCamera?: BABYLON.Camera;
+    babylonEngine?: BABYLON.Engine;
+}
+
+interface BabylonMapControllerProps {
+  map: MaplibreMap | null; 
+}
+
 
 export default function MapComponent( { onMapReady }: { onMapReady: (map: maplibregl.Map) => void } ) {
   // Ref for the map container
   const mapContainer = useRef<HTMLDivElement>(null)
   const mapRef = useRef<maplibregl.Map | null>(null)
   const MAPTILER_KEY = import.meta.env.VITE_MAPTILER_KEY // Use MapTiler key for vector tiles
+  const babylonEngineInstanceRef = useRef<BABYLON.Engine | null>(null);
+      // To store references to scene and camera for cleanup and render logic
+  const babylonResourcesRef = useRef<{ scene?: BABYLON.Scene, camera?: BABYLON.Camera }>({});
 
+  const babylonLayerRef = useRef<BabylonLayerImpl | null>(null);
+  const babylonLayer = new BabylonLayerImpl('babylon-custom-layer');
+  
   useEffect(() => {
     if (mapRef.current || !mapContainer.current) return
     // Initialize the map
@@ -32,6 +52,7 @@ export default function MapComponent( { onMapReady }: { onMapReady: (map: maplib
         type: 'vector',
         url: `https://api.maptiler.com/tiles/v3/tiles.json?key=${MAPTILER_KEY}`, // Use a public vector tile source
       })
+      mapRef.current.addLayer(babylonLayer)
       // Add 3D buildings
       mapRef.current.addLayer(
         {

@@ -1,5 +1,5 @@
-import { useRef, useState } from 'react' // Changed from mapboxgl to maplibregl
-import maplibregl from 'maplibre-gl'; // Added import for maplibregl
+import { useRef, useState } from 'react' 
+import maplibregl from 'maplibre-gl'; 
 import './App.css'
 import MapComponent from './components/map/MapComponent'
 import BabylonMapController from './components/map/BabylonMapLayer' // Updated import
@@ -11,7 +11,6 @@ function App() {
 
   const handleMapReady = (map: maplibregl.Map) => {
     mapRef.current = map
-    // Wait for the map to be fully loaded
     map.on('load', () => {
       setIsMapReady(true)
     })
