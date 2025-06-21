@@ -1,0 +1,77 @@
+{
+	"contracts": {
+		"Kart": "cadence/contracts/Kart.cdc",
+		"MetadataViews": {
+			"source": "",
+			"aliases": {
+				"emulator": "f8d6e0586b0a20c7",
+				"testnet": "631e88ae7f1d7c20"
+			}
+		},
+		"NonFungibleToken": {
+			"source": "",
+			"aliases": {
+				"emulator": "f8d6e0586b0a20c7",
+				"testnet": "631e88ae7f1d7c20"
+			}
+		},
+		"ViewResolver": {
+			"source": "",
+			"aliases": {
+				"emulator": "f8d6e0586b0a20c7",
+				"testnet": "631e88ae7f1d7c20"
+			}
+		},
+		"FlowToken": {
+			"source": "",
+			"aliases": {
+				"emulator": "0ae53cb6e3f42a79",
+				"testnet": "7e60df042a9c0868"
+			}
+		},
+		"FungibleToken": {
+			"source": "",
+			"aliases": {
+				"emulator": "ee82856bf20e2aa6",
+				"testnet": "9a0766d93b6608b7"
+			}
+		}
+	},
+	"networks": {
+		"emulator": "127.0.0.1:3569",
+		"mainnet": "access.mainnet.nodes.onflow.org:9000",
+		"testing": "127.0.0.1:3569",
+		"testnet": "access.devnet.nodes.onflow.org:9000"
+	},
+	"accounts": {
+		"emulator-account": {
+			"address": "f8d6e0586b0a20c7",
+			"key": {
+				"type": "file",
+				"location": "emulator-account.pkey"
+			}
+		},
+		"test-acct": {
+			"address": "179b6b1cb6755e31",
+			"key": "5fca837a77dbde9615c2ac90bcb05f7fcd59c0bf0af9d614535a35aaad9a1913"
+		},
+		"test-acct-2": {
+			"address": "f3fcd2c1a78f5eee",
+			"key": "e40e9aac450f9d8cf5df0bbba9293d01aef7635ad1225da1df2ebbb3b7847f7e"
+		},
+		"testnet-acct": {
+			"address": "f2f4e196da8930b6",
+			"key": {
+				"type": "file",
+				"location": "testnet-acct.pkey"
+			}
+		}
+	},
+	"deployments": {
+		"emulator": {
+			"emulator-account": [
+				"Kart"
+			]
+		}
+	}
+}
