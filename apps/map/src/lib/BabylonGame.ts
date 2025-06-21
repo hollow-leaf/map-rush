@@ -1,8 +1,13 @@
-import { Engine, Vector3, AbstractMesh, Quaternion } from '@babylonjs/core'; // Added Tools
+import { Engine, Scene, Vector3, AbstractMesh, Quaternion } from '@babylonjs/core'; // Added Scene for type hint
 import { BabylonScene } from './BabylonScene';
 import { BabylonCamera } from './BabylonCamera';
 import { BabylonModelLoader } from './BabylonModelLoader';
 import { BabylonControls } from './BabylonControls';
+import type { ModelConfig } from './CustomLayerConfig'; // For ModelConfig type
+
+// Define a type for the config parameter to loadCarModelAndSetup
+// This will be a subset of ModelConfig, specifically what BabylonModelLoader needs
+type ModelLoadOptions = Pick<ModelConfig, 'url' | 'baseScale' | 'positionOffset' | 'rotationOffset'>;
 
 export class BabylonGame {
     private engine: Engine | null = null;
@@ -84,15 +89,21 @@ export class BabylonGame {
         });
     }
 
-    public async loadCarModelAndSetup(modelUrl: string): Promise<void> {
+    public async loadCarModelAndSetup(config: ModelLoadOptions): Promise<void> {
         if (!this.modelLoader || !this.babylonCamera || !this.controls || !this.babylonScene) {
             console.error("BabylonGame components not fully initialized for model loading.");
             return;
         }
-        const carModel = await this.modelLoader.loadCarModel(modelUrl);
+        // Pass the relevant parts of the config to the modelLoader
+        const carModel = await this.modelLoader.loadCarModel(config.url, {
+            baseScale: config.baseScale,
+            positionOffset: config.positionOffset,
+            rotationOffset: config.rotationOffset
+        });
+
         if (carModel) {
-            this.babylonCamera.setCarModel(carModel); // Link car model to camera for targeting
-            this.controls.setCarModel(carModel);     // Link car model to controls
+            this.babylonCamera.setCarModel(carModel); 
+            this.controls.setCarModel(carModel);     
             this.babylonCamera.updateCameraPosition(); // Ensure camera is correctly positioned after model load
         } else {
             console.error("Failed to load car model in BabylonGame.");

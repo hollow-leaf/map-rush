@@ -47,13 +47,16 @@ export class BabylonLayerImpl implements BabylonLayerType {
         }
 
         try {
-            // Load the 3D model using the URL from the imported config
-            await this.babylonGame.loadCarModelAndSetup(
-                this.modelConfig.url,
-            );
+            // Load the 3D model using the full modelConfig
+            await this.babylonGame.loadCarModelAndSetup({
+                url: this.modelConfig.url,
+                baseScale: this.modelConfig.baseScale,
+                positionOffset: this.modelConfig.positionOffset,
+                rotationOffset: this.modelConfig.rotationOffset,
+            });
             console.log(`Babylon model (${this.modelConfig.url}) loaded and setup successfully by BabylonLayer.`);
 
-            // Setup keyboard controls after model is loaded (if BabylonGame handles this)
+            // Setup keyboard controls after model is loaded
             // If keyboard controls are more global, they might be initialized elsewhere
             // or passed as a configuration. For now, assuming BabylonGame sets them up.
             this.babylonGame.setupKeyboardControls();

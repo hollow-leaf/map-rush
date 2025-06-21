@@ -1,45 +1,78 @@
-import { Scene, SceneLoader, AbstractMesh, Vector3, Quaternion } from '@babylonjs/core';
+import { Scene, SceneLoader, AbstractMesh, Vector3, Quaternion, Tools } from '@babylonjs/core';
 import '@babylonjs/loaders/glTF'; // For GLTF model loading
+import type { ModelConfig } from './CustomLayerConfig'; // Import ModelConfig type
+
+// Define a type for the optional config parameters to loadCarModel
+type ModelLoadConfig = Pick<ModelConfig, 'baseScale' | 'positionOffset' | 'rotationOffset'>;
 
 export class BabylonModelLoader {
     private scene: Scene;
     public carModel: AbstractMesh | null = null;
-    private babylonOrigin: Vector3 | null = null; // Could be part of a broader world/coordinate manager
+    private babylonOrigin: Vector3 | null = null; 
 
     constructor(scene: Scene) {
         this.scene = scene;
     }
 
-    public async loadCarModel(modelUrl: string, initialPosition: Vector3 = new Vector3(0, 0.2, 0), initialScaling: Vector3 = new Vector3(0.1, 0.1, 0.1)): Promise<AbstractMesh | null> {
+    public async loadCarModel(
+        modelUrl: string, 
+        config?: ModelLoadConfig
+    ): Promise<AbstractMesh | null> {
         try {
-            const model = await SceneLoader.ImportMeshAsync("", modelUrl, "", this.scene);
+            const model = await SceneLoader.LoadAssetContainerAsync(modelUrl, "", this.scene);
             console.log("Model loaded successfully:", model);
             if (model.meshes.length > 0) {
-                this.carModel = model.meshes[0]; // Assuming the first mesh is the car root
+                this.carModel = model.meshes[0]; 
                 if (this.carModel) {
-                    // console.log("BabylonModelLoader: Model imported successfully. Root mesh name:", this.carModel.name);
-                    this.carModel.position = initialPosition;
-                    this.carModel.scaling = initialScaling;
+                    // Default position is (0,0,0)
+                    this.carModel.position = new Vector3(0, 0, 0);
+                    
+                    // Default scaling if not provided in config
+                    this.carModel.scaling = new Vector3(0.1, 0.1, 0.1); 
+
                     if (!this.carModel.rotationQuaternion) {
-                        this.carModel.rotationQuaternion = Quaternion.Identity(); 
+                        this.carModel.rotationQuaternion = Quaternion.Identity();
                     }
 
-                    // Apply the X-axis rotation to align with MapLibre's coordinate system (+Z up)
-                    // Assuming the original model is designed with Y-up standard.
-                    const xUpToZUpRotation = Quaternion.FromEulerAngles(Math.PI / 2, 0, 0);
-                    this.carModel.rotationQuaternion = xUpToZUpRotation.multiply(this.carModel.rotationQuaternion);
-                    
-                    this.carModel.computeWorldMatrix(true); 
+                    // Apply base scale from config if available
+                    if (config?.baseScale) {
+                        this.carModel.scaling = new Vector3(config.baseScale.x, config.baseScale.y, config.baseScale.z);
+                    }
 
-                    this.carModel.refreshBoundingInfo(true); 
+                    // Apply position offset from config if available
+                    // This adds to the base position (0,0,0)
+                    if (config?.positionOffset) {
+                        this.carModel.position = this.carModel.position.add(
+                            new Vector3(config.positionOffset.x, config.positionOffset.y, config.positionOffset.z)
+                        );
+                    }
+                    
+                    // Base rotation to align model from Y-up (standard) to Z-up (MapLibre)
+                    // This is Math.PI / 2 around the X-axis.
+                    let finalRotation = Quaternion.FromEulerAngles(Math.PI / 2, 0, 0);
+
+                    // Apply rotation offset from config if available
+                    // These are assumed to be Euler angles in degrees, need to convert to radians
+                    if (config?.rotationOffset) {
+                        const offsetXRad = Tools.ToRadians(config.rotationOffset.x);
+                        const offsetYRad = Tools.ToRadians(config.rotationOffset.y);
+                        const offsetZRad = Tools.ToRadians(config.rotationOffset.z);
+                        const offsetQuaternion = Quaternion.FromEulerAngles(offsetXRad, offsetYRad, offsetZRad);
+                        finalRotation = offsetQuaternion.multiply(finalRotation); // Apply offset first, then base rotation
+                    }
+                    
+                    this.carModel.rotationQuaternion = finalRotation.multiply(this.carModel.rotationQuaternion);
+
+                    this.carModel.computeWorldMatrix(true);
+                    this.carModel.refreshBoundingInfo(true);
+                    
                     const boundingBox = this.carModel.getBoundingInfo().boundingBox;
-                    console.log("  BoundingBox Size (World):", boundingBox.extendSizeWorld.scale(2).toString()); 
+                    console.log("  BoundingBox Size (World):", boundingBox.extendSizeWorld.scale(2).toString());
                     console.log("  BoundingBox Min (World):", boundingBox.minimumWorld.toString());
                     console.log("  BoundingBox Max (World):", boundingBox.maximumWorld.toString());
 
-                    if (!this.babylonOrigin) { 
+                    if (!this.babylonOrigin) {
                         this.babylonOrigin = this.carModel.getAbsolutePosition().clone();
-                        // console.log("BabylonModelLoader: Babylon origin set to car model's initial absolute position:", this.babylonOrigin.toString());
                     }
                     return this.carModel;
                 } else {
