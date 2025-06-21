@@ -1,4 +1,4 @@
-import { Scene, Engine, Color4, HemisphericLight, Vector3, MeshBuilder, AbstractMesh } from '@babylonjs/core';
+import { Scene, Engine, Color4, HemisphericLight, PointLight, StandardMaterial, Color3, Vector3, MeshBuilder, AbstractMesh } from '@babylonjs/core';
 
 export class BabylonScene {
     public instance: Scene;
@@ -11,9 +11,22 @@ export class BabylonScene {
 
     private initialize(): void {
         this.instance.clearColor = new Color4(0, 0, 0, 0); // Transparent background
+        this.instance.autoClear = false; // For better blending with MapLibre scene
 
         // Basic light setup
-        new HemisphericLight("light1", new Vector3(0, 1, 0), this.instance);
+        const hemisphericLight = new HemisphericLight("hemisphericLight", new Vector3(0, 1, 0), this.instance);
+        hemisphericLight.intensity = 0.7;
+
+        // Point light for better visibility
+        const pointLight = new PointLight("pointLight", new Vector3(0, 2, -2), this.instance);
+        pointLight.intensity = 0.8;
+
+        // Test Cube - This was for debugging, consider removing or making it optional
+        const testCube = MeshBuilder.CreateBox("testCube", { size: 1 }, this.instance);
+        testCube.position = new Vector3(0, 0.5, 0);
+        const testCubeMaterial = new StandardMaterial("testCubeMaterial", this.instance);
+        testCubeMaterial.diffuseColor = new Color3(1, 0, 0); // Red
+        testCube.material = testCubeMaterial;
 
         // Example: Add a ground plane
         const ground = MeshBuilder.CreateGround("ground", { width: 20, height: 20 }, this.instance);

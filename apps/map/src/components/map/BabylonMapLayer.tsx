@@ -22,17 +22,22 @@ class BabylonLayerImpl implements BabylonLayerType {
         this.renderingMode = '3d';
     }
 
-    async onAdd(map: MaplibreMap, _gl: WebGLRenderingContext) { // gl context not directly used by BabylonGame initialize
+    async onAdd(map: MaplibreMap, gl: WebGLRenderingContext) { // Now we use the gl context
         this.map = map;
-        const mapCanvas = map.getCanvas();
+        const mapCanvas = map.getCanvas(); // Still needed for camera controls
         this.babylonGame = new BabylonGame();
         
-        // Initialize BabylonGame, but don't start its own render loop
-        this.babylonGame.initialize(mapCanvas, false); 
+        // Initialize BabylonGame with gl context and canvas, don't start its own render loop
+        if (gl && mapCanvas) {
+            this.babylonGame.initialize(gl, mapCanvas, false); 
+        } else {
+            console.error("BabylonMapLayer: Missing gl context or mapCanvas for BabylonGame initialization.");
+            return;
+        }
         
         try {
             // Load the 3D model using the new method in BabylonGame
-            await this.babylonGame.loadCarModelAndSetup('https://docs.mapbox.com/mapbox-gl-js/assets/34M_17/34M_17.gltf');
+            await this.babylonGame.loadCarModelAndSetup('https://maplibre.org/maplibre-gl-js/docs/assets/34M_17/34M_17.gltf');
             console.log("Babylon model loaded and setup successfully by BabylonLayer.");
 
             // Setup keyboard controls after model is loaded

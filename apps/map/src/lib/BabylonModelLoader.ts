@@ -1,4 +1,4 @@
-import { Scene, SceneLoader, AbstractMesh, Vector3 } from '@babylonjs/core';
+import { Scene, SceneLoader, AbstractMesh, Vector3, Quaternion } from '@babylonjs/core';
 import '@babylonjs/loaders/glTF'; // For GLTF model loading
 
 export class BabylonModelLoader {
@@ -17,18 +17,36 @@ export class BabylonModelLoader {
             if (model.meshes.length > 0) {
                 this.carModel = model.meshes[0]; // Assuming the first mesh is the car root
                 if (this.carModel) {
+                    // console.log("BabylonModelLoader: Model imported successfully. Root mesh name:", this.carModel.name);
                     this.carModel.position = initialPosition;
                     this.carModel.scaling = initialScaling;
-                    this.carModel.computeWorldMatrix(true);
+                    if (!this.carModel.rotationQuaternion) {
+                        this.carModel.rotationQuaternion = Quaternion.Identity(); 
+                    }
 
-                    // If the car model has child meshes, ensure their world matrices are also updated.
-                    // this.carModel.getChildMeshes().forEach(mesh => mesh.computeWorldMatrix(true));
+                    // Apply the X-axis rotation to align with MapLibre's coordinate system (+Z up)
+                    // Assuming the original model is designed with Y-up standard.
+                    const xUpToZUpRotation = Quaternion.FromEulerAngles(Math.PI / 2, 0, 0);
+                    this.carModel.rotationQuaternion = xUpToZUpRotation.multiply(this.carModel.rotationQuaternion);
+                    
+                    this.carModel.computeWorldMatrix(true); 
 
-                    if (!this.babylonOrigin) { // Set origin only once
+                    this.carModel.refreshBoundingInfo(true); 
+                    const boundingBox = this.carModel.getBoundingInfo().boundingBox;
+                    console.log("  BoundingBox Size (World):", boundingBox.extendSizeWorld.scale(2).toString()); 
+                    console.log("  BoundingBox Min (World):", boundingBox.minimumWorld.toString());
+                    console.log("  BoundingBox Max (World):", boundingBox.maximumWorld.toString());
+
+                    if (!this.babylonOrigin) { 
                         this.babylonOrigin = this.carModel.getAbsolutePosition().clone();
+                        // console.log("BabylonModelLoader: Babylon origin set to car model's initial absolute position:", this.babylonOrigin.toString());
                     }
                     return this.carModel;
+                } else {
+                    console.error("BabylonModelLoader: Root mesh (model.meshes[0]) is null after import.");
                 }
+            } else {
+                console.error("BabylonModelLoader: No meshes found in the loaded model.");
             }
             return null;
         } catch (error) {

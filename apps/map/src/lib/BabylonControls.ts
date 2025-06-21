@@ -34,31 +34,41 @@ export class BabylonControls {
     public setupKeyboardControls(): void {
         if (!this.scene) return;
 
+        if (!this.scene) {
+            // console.error("BabylonControls: Scene is not available for setting up keyboard controls.");
+            return;
+        }
         this.scene.actionManager = new ActionManager(this.scene);
+        if (!this.scene.actionManager) {
+            // console.error("BabylonControls: ActionManager creation failed.");
+            return;
+        }
 
         this.scene.actionManager.registerAction(
             new ExecuteCodeAction(ActionManager.OnKeyDownTrigger, (evt) => {
-                this.inputMap[evt.sourceEvent.key.toLowerCase()] = true;
+                const key = evt.sourceEvent.key.toLowerCase();
+                this.inputMap[key] = true;
             })
         );
         this.scene.actionManager.registerAction(
             new ExecuteCodeAction(ActionManager.OnKeyUpTrigger, (evt) => {
-                this.inputMap[evt.sourceEvent.key.toLowerCase()] = false;
+                const key = evt.sourceEvent.key.toLowerCase();
+                this.inputMap[key] = false;
             })
         );
+        // console.log("BabylonControls: Keyboard listeners registered.");
 
         this.scene.onBeforeRenderObservable.add(() => {
             if (!this.carModel) return;
 
             const previousPosition = this.carModel.position.clone();
-            // Ensure rotationQuaternion is initialized (it should be by setCarModel, but as a fallback)
             if (!this.carModel.rotationQuaternion) {
                 this.carModel.rotationQuaternion = Quaternion.FromEulerVector(this.carModel.rotation);
             }
             const previousRotation = this.carModel.rotationQuaternion.clone();
 
             let isSprinting = false;
-            if (this.inputMap["shift"]) { // Sprint key
+            if (this.inputMap["shift"]) { 
                 this.currentSpeed = this.sprintSpeed;
                 isSprinting = true;
             } else {
@@ -68,20 +78,20 @@ export class BabylonControls {
             let moved = false;
             let rotated = false;
 
-            if (this.inputMap["arrowup"]) {
+            if (this.inputMap["arrowup"] || this.inputMap["w"]) {
                 this._move('forward', this.currentSpeed);
                 moved = true;
             }
-            if (this.inputMap["arrowdown"]) {
-                this._move('backward', this.currentSpeed * 0.7); // Slower reverse
+            if (this.inputMap["arrowdown"] || this.inputMap["s"]) {
+                this._move('backward', this.currentSpeed * 0.7); 
                 moved = true;
             }
 
-            if (this.inputMap["arrowleft"]) {
+            if (this.inputMap["arrowleft"] || this.inputMap["a"]) {
                 this._rotate('left');
                 rotated = true;
             }
-            if (this.inputMap["arrowright"]) {
+            if (this.inputMap["arrowright"] || this.inputMap["d"]) {
                 this._rotate('right');
                 rotated = true;
             }
@@ -91,10 +101,11 @@ export class BabylonControls {
             if (actionPerformed) {
                 this.carModel.computeWorldMatrix(true);
                 let collisionDetected = false;
-                if (moved) { // Only check collision if moved
+                if (moved) { 
                     const carBoundingBox = this.carModel.getBoundingInfo().boundingBox;
                     for (const obstacle of this.obstacles) {
                         if (obstacle.isEnabled() && carBoundingBox.intersects(obstacle.getBoundingInfo().boundingBox)) {
+                            // console.log("BabylonControls: Collision detected with obstacle:", obstacle.name);
                             collisionDetected = true;
                             break;
                         }
@@ -106,29 +117,37 @@ export class BabylonControls {
                     this.carModel.rotationQuaternion = previousRotation;
                     this.carModel.computeWorldMatrix(true); 
                 } else {
-                    this.cameraUpdater(); // Update camera if no collision
+                    this.cameraUpdater(); 
                     if (this.onCarMoved) {
                         this.onCarMoved(this.carModel.getAbsolutePosition(), isSprinting);
                     }
                 }
             }
         });
+        // console.log("BabylonControls: onBeforeRenderObservable callback added for input processing.");
     }
 
     private _move(direction: 'forward' | 'backward', speed: number): void {
-        if (!this.carModel || !this.carModel.rotationQuaternion) return;
+        if (!this.carModel || !this.carModel.rotationQuaternion) {
+            return;
+        }
 
-        const moveVector = direction === 'forward' ? new Vector3(0, 0, 1) : new Vector3(0, 0, -1);
+        const moveVector = direction === 'forward' ? new Vector3(0, 0, 1) : new Vector3(0, 0, -1); 
         const worldMoveVector = Vector3.Zero();
+        
         this.carModel.rotationQuaternion.toRotationMatrix(Matrix.IdentityReadOnly).transformCoordinates(moveVector, worldMoveVector);
-        this.carModel.position.addInPlace(worldMoveVector.scale(speed));
+        
+        this.carModel.position.addInPlace(worldMoveVector.normalize().scaleInPlace(speed)); 
     }
 
     private _rotate(direction: 'left' | 'right'): void {
-        if (!this.carModel || !this.carModel.rotationQuaternion) return;
+        if (!this.carModel || !this.carModel.rotationQuaternion) {
+            return;
+        }
         
         const rotationAngle = direction === 'left' ? -this.rotationSpeed : this.rotationSpeed;
-        this.carModel.rotationQuaternion = Quaternion.FromAxisAngle(Vector3.UpReadOnly, rotationAngle).multiply(this.carModel.rotationQuaternion);
+        const rotationQuaternion = Quaternion.FromAxisAngle(Vector3.UpReadOnly, rotationAngle); 
+        this.carModel.rotationQuaternion = rotationQuaternion.multiply(this.carModel.rotationQuaternion);
     }
 
     public triggerMovement(direction: 'forward' | 'backward', isSprinting: boolean = false): void {
