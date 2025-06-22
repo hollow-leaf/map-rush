@@ -1,5 +1,5 @@
-import "NonFungibleToken"
-import "MetadataViews"
+import NonFungibleToken from "NonFungibleToken"
+import MetadataViews from "MetadataViews"
 
 access(all) contract Kart: NonFungibleToken {
 
@@ -9,6 +9,18 @@ access(all) contract Kart: NonFungibleToken {
 
     /// Path where the minter should be stored
     access(all) let MinterStoragePath: StoragePath
+
+    /// 最大供應量上限
+    access(all) let maxSupply: UInt64
+
+    /// 當前總供應量
+    access(all) var totalSupply: UInt64
+
+    /// Events
+    access(all) event ContractInitialized()
+    access(all) event Withdraw(id: UInt64, from: Address?)
+    access(all) event Deposit(id: UInt64, to: Address?)
+    access(all) event Minted(id: UInt64)
 
     access(all) resource NFT: NonFungibleToken.NFT {
         access(all) let id: UInt64
@@ -44,9 +56,12 @@ access(all) contract Kart: NonFungibleToken {
                         )
                     )
                 case Type<MetadataViews.Editions>():
-                    // There is no max number of NFTs that can be minted from this contract
-                    // so the max edition field value is set to nil
-                    let editionInfo = MetadataViews.Edition(name: "Kart Edition", number: self.id, max: nil)
+                    // 使用最大供應量作為版本上限
+                    let editionInfo = MetadataViews.Edition(
+                        name: "Kart Edition", 
+                        number: self.id, 
+                        max: Kart.maxSupply
+                    )
                     let editionList: [MetadataViews.Edition] = [editionInfo]
                     return MetadataViews.Editions(
                         editionList
@@ -81,6 +96,8 @@ access(all) contract Kart: NonFungibleToken {
             // add the new token to the dictionary which removes the old one
             let oldToken <- self.ownedNFTs[token.id] <- token
 
+            emit Deposit(id: id, to: self.owner?.address)
+
             destroy oldToken
         }
 
@@ -88,6 +105,8 @@ access(all) contract Kart: NonFungibleToken {
         access(NonFungibleToken.Withdraw) fun withdraw(withdrawID: UInt64): @{NonFungibleToken.NFT} {
             let token <- self.ownedNFTs.remove(key: withdrawID)
                 ?? panic("Could not withdraw an NFT with the provided ID from the collection")
+
+            emit Withdraw(id: token.id, from: self.owner?.address)
 
             return <-token
         }
@@ -139,6 +158,16 @@ access(all) contract Kart: NonFungibleToken {
         ]
     }
 
+    /// 獲取剩餘可鑄造的 NFT 數量
+    access(all) view fun getRemainingSupply(): UInt64 {
+        return self.maxSupply - self.totalSupply
+    }
+
+    /// 檢查是否還可以鑄造 NFT
+    access(all) view fun canMint(): Bool {
+        return self.totalSupply < self.maxSupply
+    }
+
     /// Resolves a view that applies to all the NFTs defined by this contract
     access(all) fun resolveContractView(resourceType: Type?, viewType: Type): AnyStruct? {
         switch viewType {
@@ -175,18 +204,59 @@ access(all) contract Kart: NonFungibleToken {
     }
 
     access(all) resource NFTMinter {
+        /// 鑄造新的 NFT，檢查供應量上限
         access(all) fun createNFT(): @NFT {
-            return <-create NFT()
+            // 檢查是否達到最大供應量上限
+            if Kart.totalSupply >= Kart.maxSupply {
+                panic("已達到最大供應量上限 (".concat(Kart.maxSupply.toString()).concat(")，無法鑄造更多 NFT"))
+            }
+            
+            // 增加總供應量
+            Kart.totalSupply = Kart.totalSupply + 1
+            
+            let nft <- create NFT()
+            
+            emit Minted(id: nft.id)
+            
+            return <-nft
+        }
+
+        /// 批量鑄造 NFT
+        access(all) fun batchCreateNFT(quantity: UInt64): @[NFT] {
+            // 檢查是否有足夠的剩餘供應量
+            if Kart.totalSupply + quantity > Kart.maxSupply {
+                panic("批量鑄造數量超過剩餘供應量。剩餘: ".concat(Kart.getRemainingSupply().toString()).concat("，請求: ").concat(quantity.toString()))
+            }
+            
+            var nfts: @[NFT] <- []
+            var i: UInt64 = 0
+            
+            while i < quantity {
+                nfts.append(<-self.createNFT())
+                i = i + 1
+            }
+            
+            return <-nfts
         }
 
         init() {}
     }
 
     init() {
+        // 設置最大供應量為 10,000
+        self.maxSupply = 10_000
+        
+        // 初始化總供應量為 0
+        self.totalSupply = 0
+        
         // Set the named paths
         self.CollectionStoragePath = /storage/kartNFTCollection
         self.CollectionPublicPath = /public/kartNFTCollection
         self.MinterStoragePath = /storage/kartNFTMinter
-        self.account.storage.save(<- create NFTMinter(), to: /storage/kartNFTMinter)
+        
+        // Create and save the minter resource to the account storage
+        self.account.storage.save(<-create NFTMinter(), to: self.MinterStoragePath)
+        
+        emit ContractInitialized()
     }
 }
