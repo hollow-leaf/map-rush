@@ -1,4 +1,4 @@
-import { FreeCamera, Vector3, Scene, AbstractMesh, Matrix, Quaternion } from '@babylonjs/core';
+import { FreeCamera, Vector3, Scene, AbstractMesh, Quaternion } from '@babylonjs/core';
 
 export class BabylonCamera {
     public instance: FreeCamera | null = null;
@@ -7,8 +7,8 @@ export class BabylonCamera {
     private carModel: AbstractMesh | null = null; // Reference to the car model for targeting
 
     public activeCameraView: 'sky' | 'ground' = 'sky'; // Default view
-    private groundViewOffset = new Vector3(0, 2, -6);
-    private skyViewOffset = new Vector3(0, 10, -10);
+    private groundViewOffset = new Vector3(0, 1, -3); // Halved distance
+    private skyViewOffset = new Vector3(0, 5, -5); // Halved distance
 
     constructor(scene: Scene, canvas: HTMLCanvasElement) {
         this.scene = scene;
@@ -17,66 +17,76 @@ export class BabylonCamera {
     }
 
     private initialize(): void {
-        this.instance = new FreeCamera("camera1", new Vector3(0, 5, -10), this.scene);
-        this.instance.fov = Math.PI / 4; // Set FOV
-        this.instance.setTarget(Vector3.Zero());
-        this.instance.attachControl(this.canvas, true); // TODO: Consider if camera controls should be managed here or by a dedicated input manager
+        // Simplified initial position and target for debugging
+        // Restored original initialization logic, or close to it
+        this.instance = new FreeCamera("camera1", new Vector3(0, 0, 0), this.scene); // Default position
+        this.instance.fov = Math.PI / 2; // Set FOV
+        // this.instance.setTarget(Vector3.Zero()); // Default target
+        console.log("BabylonCamera: Camera initialized with default position and target.");
+        // this.instance.attachControl(this.canvas, true); 
     }
 
     public setCarModel(model: AbstractMesh): void {
+        // console.log("BabylonCamera: setCarModel called with model:", model ? model.name : "null");
         this.carModel = model;
         this.updateCameraPosition(); // Initial position update once model is set
     }
 
     public setCameraViewType(viewType: 'sky' | 'ground'): void {
+        // console.log("BabylonCamera: setCameraViewType called with viewType:", viewType);
         this.activeCameraView = viewType;
         this.updateCameraPosition();
     }
 
     public updateCameraPosition(): void {
-        if (!this.instance) return;
-
-        if (!this.carModel) {
-            // Default camera position if no car model is set (e.g., looking at scene origin)
-            this.instance.position = this.activeCameraView === 'sky' ? this.skyViewOffset : new Vector3(0, 2, -5); // Adjusted ground view without car
-            this.instance.setTarget(Vector3.Zero());
+        if (!this.instance) {
+            // console.error("BabylonCamera: updateCameraPosition called but camera instance is null.");
             return;
         }
 
-        let cameraPositionInCarSpace: Vector3;
+        // console.log("BabylonCamera: updateCameraPosition called.");
+
+        if (!this.carModel) {
+            // console.log("BabylonCamera: No car model set. Using default camera position targeting origin.");
+            this.instance.position = this.activeCameraView === 'sky' ? this.skyViewOffset.clone() : new Vector3(0, 2, -5); // Original logic for no car model
+            this.instance.setTarget(Vector3.Zero());
+            // console.log("  New Camera Position (no model):", this.instance.position.toString());
+            // console.log("  New Camera Target (no model):", this.instance.getTarget().toString());
+            return;
+        }
+
+        // console.log("BabylonCamera: Car model is present. Name:", this.carModel.name);
+        const carAbsolutePosition = this.carModel.getAbsolutePosition();
+        // console.log("  Car Model Absolute Position:", carAbsolutePosition.toString());
+        // console.log("  Car Model Rotation Quaternion:", this.carModel.rotationQuaternion ? this.carModel.rotationQuaternion.toString() : "N/A");
+        
+        let cameraPositionInCarSpace: Vector3; 
 
         if (this.activeCameraView === 'ground') {
-            cameraPositionInCarSpace = this.groundViewOffset;
+            cameraPositionInCarSpace = this.groundViewOffset.clone(); 
+            // console.log("  Using groundViewOffset:", cameraPositionInCarSpace.toString());
         } else { // 'sky'
-            cameraPositionInCarSpace = this.skyViewOffset;
+            cameraPositionInCarSpace = this.skyViewOffset.clone(); 
+            // console.log("  Using skyViewOffset:", cameraPositionInCarSpace.toString());
         }
 
-        const carWorldMatrix = this.carModel.getWorldMatrix();
-        let worldOffset: Vector3;
+        const carRotation = this.carModel.rotationQuaternion ? this.carModel.rotationQuaternion : Quaternion.IdentityReadOnly;
+        // if (!this.carModel.rotationQuaternion) {
+            // console.warn("BabylonCamera: Car model does not have a rotationQuaternion. Using Identity.");
+        // }
 
-        // Ensure carModel has rotationQuaternion, default to Euler if not.
-        const carRotationQuaternion = this.carModel.rotationQuaternion ? this.carModel.rotationQuaternion : Quaternion.FromEulerVector(this.carModel.rotation);
+        const rotatedOffset = Vector3.Zero();
+        cameraPositionInCarSpace.rotateByQuaternionToRef(carRotation, rotatedOffset); 
         
-        if (carWorldMatrix) {
-            // Convert the camera position from car space to world space
-            worldOffset = Vector3.TransformCoordinates(cameraPositionInCarSpace, carWorldMatrix)
-                .add(this.carModel.getAbsolutePosition());
-        } else {
-            // Fallback if carWorldMatrix is not available
-            worldOffset = cameraPositionInCarSpace.add(this.carModel.getAbsolutePosition());
-        }
-        // Calculate the desired camera position in world space
-        // Use the car's absolute position to set the camera target
-        // This ensures the camera follows the car's position in the scene
-        if (!this.carModel.getAbsolutePosition) {
-            console.warn("Car model does not have an absolute position method, using local position instead.");
-            this.carModel.getAbsolutePosition = () => this.carModel.position;
-        }
-        
-        const desiredCameraPosition = this.carModel.getAbsolutePosition().add(worldOffset);
+        // console.log("  Calculated rotatedOffset (world space offset from car):", rotatedOffset.toString());
 
-        this.instance.position = desiredCameraPosition;
-        this.instance.setTarget(this.carModel.getAbsolutePosition());
+        const finalDesiredCameraPosition = carAbsolutePosition.add(rotatedOffset);
+        
+        this.instance.position = finalDesiredCameraPosition;
+        this.instance.setTarget(carAbsolutePosition); 
+
+        // console.log("  New Camera Position (restored logic):", this.instance.position.toString());
+        // console.log("  New Camera Target (restored logic):", this.instance.getTarget().toString());
     }
 
     public getActiveCamera(): FreeCamera | null {

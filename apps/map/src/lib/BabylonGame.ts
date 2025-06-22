@@ -1,12 +1,18 @@
-import { Engine, Vector3, AbstractMesh, Quaternion } from '@babylonjs/core';
+import { Engine, Scene, Vector3, AbstractMesh, Quaternion } from '@babylonjs/core'; // Added Scene for type hint
 import { BabylonScene } from './BabylonScene';
 import { BabylonCamera } from './BabylonCamera';
 import { BabylonModelLoader } from './BabylonModelLoader';
 import { BabylonControls } from './BabylonControls';
+import type { ModelConfig } from './CustomLayerConfig'; // For ModelConfig type
+
+// Define a type for the config parameter to loadCarModelAndSetup
+// This will be a subset of ModelConfig, specifically what BabylonModelLoader needs
+type ModelLoadOptions = Pick<ModelConfig, 'url' | 'baseScale' | 'positionOffset' | 'rotationOffset'>;
 
 export class BabylonGame {
-    private canvas: HTMLCanvasElement | null = null;
     private engine: Engine | null = null;
+    // We still need the canvas for camera controls, even if engine uses GL context
+    private canvasForControls: HTMLCanvasElement | null = null; 
     
     public babylonScene: BabylonScene | null = null;
     public babylonCamera: BabylonCamera | null = null;
@@ -20,12 +26,41 @@ export class BabylonGame {
         // Initialization logic will be triggered by the initialize method
     }
 
-    public initialize(canvas: HTMLCanvasElement, startRenderLoop: boolean = true): void {
-        this.canvas = canvas;
-        this.engine = new Engine(this.canvas, true, { stencil: true, alpha: true, preserveDrawingBuffer: true }, false);
+    // initialize now accepts gl context and a canvas for controls
+    public initialize(
+        gl: WebGLRenderingContext, 
+        canvasForControls: HTMLCanvasElement, 
+        startRenderLoop: boolean = true
+    ): void {
+        if (!gl) {
+            console.error("BabylonGame: WebGLRenderingContext (gl) is null or undefined at initialization.");
+            return;
+        }
+        if (!canvasForControls) {
+            console.error("BabylonGame: Canvas element for controls is null or undefined at initialization.");
+            return; 
+        }
+        this.canvasForControls = canvasForControls;
+
+        // Initialize Babylon Engine with the provided WebGL context
+        // Note: The arguments for Engine constructor when using a GL context might differ slightly.
+        // Referring to the example: new BABYLON.Engine(gl, true, { useHighPrecisionMatrix: true }, true);
+        // We'll use similar parameters, ensuring antialiasing is true, and check if other options are needed.
+        this.engine = new Engine(gl, true, { 
+            stencil: true, 
+            alpha: true, // For transparency with map background
+            preserveDrawingBuffer: true, // May be needed for custom layer integration
+            useHighPrecisionMatrix: true // As per MapLibre example, good for mercator scales
+        }, true); // The last 'true' could be for 'adaptToDeviceRatio' or similar, check docs.
+
+        if (!this.engine) {
+            console.error("BabylonGame: Engine initialization failed with GL context.");
+            return; 
+        }
         
         this.babylonScene = new BabylonScene(this.engine);
-        this.babylonCamera = new BabylonCamera(this.babylonScene.instance, this.canvas);
+        // BabylonCamera still needs a canvas for attaching controls
+        this.babylonCamera = new BabylonCamera(this.babylonScene.instance, this.canvasForControls); 
         this.modelLoader = new BabylonModelLoader(this.babylonScene.instance);
         
         // Pass the camera update function to controls
@@ -54,15 +89,21 @@ export class BabylonGame {
         });
     }
 
-    public async loadCarModelAndSetup(modelUrl: string): Promise<void> {
+    public async loadCarModelAndSetup(config: ModelLoadOptions): Promise<void> {
         if (!this.modelLoader || !this.babylonCamera || !this.controls || !this.babylonScene) {
             console.error("BabylonGame components not fully initialized for model loading.");
             return;
         }
-        const carModel = await this.modelLoader.loadCarModel(modelUrl);
+        // Pass the relevant parts of the config to the modelLoader
+        const carModel = await this.modelLoader.loadCarModel(config.url, {
+            baseScale: config.baseScale,
+            positionOffset: config.positionOffset,
+            rotationOffset: config.rotationOffset
+        });
+
         if (carModel) {
-            this.babylonCamera.setCarModel(carModel); // Link car model to camera for targeting
-            this.controls.setCarModel(carModel);     // Link car model to controls
+            this.babylonCamera.setCarModel(carModel); 
+            this.controls.setCarModel(carModel);     
             this.babylonCamera.updateCameraPosition(); // Ensure camera is correctly positioned after model load
         } else {
             console.error("Failed to load car model in BabylonGame.");
@@ -161,6 +202,6 @@ export class BabylonGame {
             this.engine.dispose();
         }
         // Other components might not have explicit dispose if their resources are managed by scene/engine
-        this.canvas = null; // Release reference
+        this.canvasForControls = null; // Release reference
     }
 }
