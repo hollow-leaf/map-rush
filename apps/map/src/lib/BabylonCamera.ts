@@ -19,11 +19,11 @@ export class BabylonCamera {
     private initialize(): void {
         // Simplified initial position and target for debugging
         // Restored original initialization logic, or close to it
-        this.instance = new FreeCamera("camera1", new Vector3(0, 5, -10), this.scene); // Default position
-        this.instance.fov = Math.PI / 4; // Set FOV
-        this.instance.setTarget(Vector3.Zero()); // Default target
-
-        this.instance.attachControl(this.canvas, true); 
+        this.instance = new FreeCamera("camera1", new Vector3(0, 0, 0), this.scene); // Default position
+        this.instance.fov = Math.PI / 2; // Set FOV
+        // this.instance.setTarget(Vector3.Zero()); // Default target
+        console.log("BabylonCamera: Camera initialized with default position and target.");
+        // this.instance.attachControl(this.canvas, true); 
     }
 
     public setCarModel(model: AbstractMesh): void {

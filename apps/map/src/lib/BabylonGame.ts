@@ -60,7 +60,7 @@ export class BabylonGame {
         
         this.babylonScene = new BabylonScene(this.engine);
         // BabylonCamera still needs a canvas for attaching controls
-        this.babylonCamera = new BabylonCamera(this.babylonScene.instance, this.canvasForControls);
+        this.babylonCamera = new BabylonCamera(this.babylonScene.instance, this.canvasForControls); 
         this.modelLoader = new BabylonModelLoader(this.babylonScene.instance);
         
         // Pass the camera update function to controls

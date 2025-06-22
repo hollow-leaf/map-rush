@@ -1,6 +1,6 @@
-import { type CustomLayerInterface, Map as MaplibreMap } from 'maplibre-gl';
+import { type CustomLayerInterface, Map as MaplibreMap, MercatorCoordinate } from 'maplibre-gl';
 import { BabylonGame } from '../../lib/BabylonGame';
-import { Matrix } from '@babylonjs/core';
+import { Matrix, Quaternion, Vector3 } from '@babylonjs/core';
 import { getModelConfig, type ModelConfig } from '../../lib/CustomLayerConfig'; // Import config
 
 // Define the structure for the BabylonLayer to hold the game instance
@@ -71,11 +71,33 @@ export class BabylonLayerImpl implements BabylonLayerType {
             if (this.map) this.map.triggerRepaint();
             return;
         }
+        const cameraMatrix = Matrix.FromArray(matrix);
         
+        const worldOrigin = this.modelConfig?.worldOrigin || [148.9819, -35.39847];
+        const worldAltitude = this.modelConfig?.worldAltitude || 0;
+        const worldRotate = [Math.PI / 2, 0, 0]; 
+
+        const worldOriginMercator = MercatorCoordinate.fromLngLat(worldOrigin as [number, number], worldAltitude);
+        const worldScale = worldOriginMercator.meterInMercatorCoordinateUnits();
+        
+        const worldMatrix = Matrix.Compose(
+            new Vector3(worldScale, worldScale, worldScale), 
+            Quaternion.FromEulerAngles( 
+                worldRotate[0],
+                worldRotate[1],
+                worldRotate[2]
+            ),
+            new Vector3( 
+                worldOriginMercator.x,
+                worldOriginMercator.y,
+                worldOriginMercator.z
+            )
+        );
         const activeCamera = this.babylonGame.babylonCamera?.getActiveCamera();
 
         if (activeCamera) {
-            const maplibreMatrix = Matrix.FromArray(matrix);
+            
+            const maplibreMatrix = worldMatrix.multiply(cameraMatrix);
             activeCamera.freezeProjectionMatrix(maplibreMatrix);
             this.babylonGame.renderScene();
         }

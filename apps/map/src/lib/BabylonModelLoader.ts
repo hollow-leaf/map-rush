@@ -19,69 +19,43 @@ export class BabylonModelLoader {
         config?: ModelLoadConfig
     ): Promise<AbstractMesh | null> {
         try {
-            const model = await SceneLoader.LoadAssetContainerAsync(modelUrl, "", this.scene);
-            console.log("Model loaded successfully:", model);
-            if (model.meshes.length > 0) {
-                this.carModel = model.meshes[0]; 
-                if (this.carModel) {
-                    // Default position is (0,0,0)
-                    this.carModel.position = new Vector3(0, 0, 0);
-                    
-                    // Default scaling if not provided in config
-                    this.carModel.scaling = new Vector3(0.1, 0.1, 0.1); 
+            const model = await SceneLoader.LoadAssetContainerAsync(modelUrl, "", this.scene)
+                .then((modelContainer) => {
+                modelContainer.addAllToScene();
+                const rootMesh = modelContainer.createRootMesh();
+                if (rootMesh) {
+                    this.carModel = rootMesh as AbstractMesh;
+                    this.babylonOrigin = this.carModel.getBoundingInfo().boundingBox.centerWorld;
 
-                    if (!this.carModel.rotationQuaternion) {
-                        this.carModel.rotationQuaternion = Quaternion.Identity();
-                    }
-
-                    // Apply base scale from config if available
-                    if (config?.baseScale) {
-                        this.carModel.scaling = new Vector3(config.baseScale.x, config.baseScale.y, config.baseScale.z);
-                    }
-
-                    // Apply position offset from config if available
-                    // This adds to the base position (0,0,0)
+                    // Apply position offset if provided
                     if (config?.positionOffset) {
-                        this.carModel.position = this.carModel.position.add(
-                            new Vector3(config.positionOffset.x, config.positionOffset.y, config.positionOffset.z)
+                        const offset = new Vector3(
+                            config.positionOffset.x || 0,
+                            config.positionOffset.y || 0,
+                            config.positionOffset.z || 0
                         );
+                        this.carModel.position.addInPlace(offset);
                     }
-                    
-                    // Base rotation to align model from Y-up (standard) to Z-up (MapLibre)
-                    // This is Math.PI / 2 around the X-axis.
-                    let finalRotation = Quaternion.FromEulerAngles(Math.PI / 2, 0, 0);
 
-                    // Apply rotation offset from config if available
-                    // These are assumed to be Euler angles in degrees, need to convert to radians
+                    // Apply rotation offset if provided
                     if (config?.rotationOffset) {
-                        const offsetXRad = Tools.ToRadians(config.rotationOffset.x);
-                        const offsetYRad = Tools.ToRadians(config.rotationOffset.y);
-                        const offsetZRad = Tools.ToRadians(config.rotationOffset.z);
-                        const offsetQuaternion = Quaternion.FromEulerAngles(offsetXRad, offsetYRad, offsetZRad);
-                        finalRotation = offsetQuaternion.multiply(finalRotation); // Apply offset first, then base rotation
+                        const rotation = Quaternion.FromEulerAngles(
+                            config.rotationOffset.x || 0,
+                            config.rotationOffset.y || 0,
+                            config.rotationOffset.z || 0
+                        );
+                        this.carModel.rotationQuaternion = rotation;
                     }
-                    
-                    this.carModel.rotationQuaternion = finalRotation.multiply(this.carModel.rotationQuaternion);
-
-                    this.carModel.computeWorldMatrix(true);
-                    this.carModel.refreshBoundingInfo(true);
-                    
-                    const boundingBox = this.carModel.getBoundingInfo().boundingBox;
-                    console.log("  BoundingBox Size (World):", boundingBox.extendSizeWorld.scale(2).toString());
-                    console.log("  BoundingBox Min (World):", boundingBox.minimumWorld.toString());
-                    console.log("  BoundingBox Max (World):", boundingBox.maximumWorld.toString());
-
-                    if (!this.babylonOrigin) {
-                        this.babylonOrigin = this.carModel.getAbsolutePosition().clone();
-                    }
-                    return this.carModel;
                 } else {
-                    console.error("BabylonModelLoader: Root mesh (model.meshes[0]) is null after import.");
+                    console.error("BabylonLayerImpl: No root mesh found in the loaded model.");
                 }
-            } else {
-                console.error("BabylonModelLoader: No meshes found in the loaded model.");
-            }
-            return null;
+            })
+            .catch((error) => {
+                console.error("BabylonLayerImpl: Error loading model asset.", error);
+            });
+            console.log("Model loaded successfully:", model);
+
+            return this.carModel;
         } catch (error) {
             console.error("Error loading model:", error);
             return null;
