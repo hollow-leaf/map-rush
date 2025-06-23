@@ -10,10 +10,10 @@ access(all) contract Kart: NonFungibleToken {
     /// Path where the minter should be stored
     access(all) let MinterStoragePath: StoragePath
 
-    /// 最大供應量上限
+    /// Maximum supply limit
     access(all) let maxSupply: UInt64
 
-    /// 當前總供應量
+    /// Current total supply
     access(all) var totalSupply: UInt64
 
     /// Events
@@ -24,9 +24,12 @@ access(all) contract Kart: NonFungibleToken {
 
     access(all) resource NFT: NonFungibleToken.NFT {
         access(all) let id: UInt64
+        /// Speed attribute (10, 8, or 5)
+        access(all) let speed: UInt8
 
-        init() {
+        init(speed: UInt8) {
             self.id = self.uuid
+            self.speed = speed
         }
 
         access(all) fun createEmptyCollection(): @{NonFungibleToken.Collection} {
@@ -40,7 +43,8 @@ access(all) contract Kart: NonFungibleToken {
                 Type<MetadataViews.Editions>(),
                 Type<MetadataViews.NFTCollectionData>(),
                 Type<MetadataViews.NFTCollectionDisplay>(),
-                Type<MetadataViews.Serial>()
+                Type<MetadataViews.Serial>(),
+                Type<MetadataViews.Traits>()
             ]
         }
 
@@ -48,15 +52,16 @@ access(all) contract Kart: NonFungibleToken {
         access(all) fun resolveView(_ view: Type): AnyStruct? {
             switch view {
                 case Type<MetadataViews.Display>():
+                    let speedRarity = self.getSpeedRarity()
                     return MetadataViews.Display(
-                        name: "Kart Example Token",
-                        description: "An Example NFT Contract from the Flow NFT Guide",
+                        name: "Kart NFT #".concat(self.id.toString()),
+                        description: "Racing NFT - Speed: ".concat(self.speed.toString()).concat(" (").concat(speedRarity).concat(")"),
                         thumbnail: MetadataViews.HTTPFile(
-                            url: "Fill this in with a URL to a thumbnail of the NFT"
+                            url: "https://maplibre.org/maplibre-gl-js/docs/assets/34M_17/34M_17.gltf"
                         )
                     )
                 case Type<MetadataViews.Editions>():
-                    // 使用最大供應量作為版本上限
+                    // Use maximum supply as edition limit
                     let editionInfo = MetadataViews.Edition(
                         name: "Kart Edition", 
                         number: self.id, 
@@ -70,12 +75,53 @@ access(all) contract Kart: NonFungibleToken {
                     return MetadataViews.Serial(
                         self.id
                     )
+                case Type<MetadataViews.Traits>():
+                    return MetadataViews.Traits([
+                        MetadataViews.Trait(
+                            name: "Speed",
+                            value: self.speed,
+                            displayType: "Number",
+                            rarity: MetadataViews.Rarity(
+                                score: self.getRarityScore(),
+                                max: 100.0,
+                                description: self.getSpeedRarity()
+                            )
+                        )
+                    ])
                 case Type<MetadataViews.NFTCollectionData>():
                     return Kart.resolveContractView(resourceType: Type<@Kart.NFT>(), viewType: Type<MetadataViews.NFTCollectionData>())
                 case Type<MetadataViews.NFTCollectionDisplay>():
                     return Kart.resolveContractView(resourceType: Type<@Kart.NFT>(), viewType: Type<MetadataViews.NFTCollectionDisplay>())
             }
             return nil
+        }
+
+        /// Get speed rarity description
+        access(all) view fun getSpeedRarity(): String {
+            switch self.speed {
+                case 10:
+                    return "Legendary"
+                case 8:
+                    return "Rare"
+                case 5:
+                    return "Common"
+                default:
+                    return "Unknown"
+            }
+        }
+
+        /// Get rarity score (for MetadataViews.Rarity)
+        access(all) view fun getRarityScore(): UFix64 {
+            switch self.speed {
+                case 10:
+                    return 100.0  // 10% probability, most rare
+                case 8:
+                    return 70.0   // 30% probability, medium rare
+                case 5:
+                    return 40.0   // 60% probability, common
+                default:
+                    return 0.0
+            }
         }
     }
 
@@ -135,6 +181,14 @@ access(all) contract Kart: NonFungibleToken {
             return (&self.ownedNFTs[id] as &{NonFungibleToken.NFT}?)
         }
 
+        /// Borrow a specific Kart NFT reference to access speed and other attributes
+        access(all) view fun borrowKartNFT(id: UInt64): &Kart.NFT? {
+            if let nft = &self.ownedNFTs[id] as &{NonFungibleToken.NFT}? {
+                return nft as! &Kart.NFT
+            }
+            return nil
+        }
+
         /// createEmptyCollection creates an empty Collection of the same type
         /// and returns it to the caller
         /// @return A an empty collection of the same type
@@ -158,14 +212,33 @@ access(all) contract Kart: NonFungibleToken {
         ]
     }
 
-    /// 獲取剩餘可鑄造的 NFT 數量
+    /// Get remaining mintable NFT quantity
     access(all) view fun getRemainingSupply(): UInt64 {
         return self.maxSupply - self.totalSupply
     }
 
-    /// 檢查是否還可以鑄造 NFT
+    /// Check if NFTs can still be minted
     access(all) view fun canMint(): Bool {
         return self.totalSupply < self.maxSupply
+    }
+
+    /// Randomly generate speed (based on probability distribution)
+    /// Speed 10: 10% probability (0-9)
+    /// Speed 8:  30% probability (10-39)  
+    /// Speed 5:  60% probability (40-99)
+    access(all) view fun generateRandomSpeed(): UInt8 {
+        // Use block height and total supply as random seed
+        let blockHeight = getCurrentBlock().height
+        let randomSeed = UInt64(blockHeight) + self.totalSupply
+        let randomValue = randomSeed % 100  // 0-99
+
+        if randomValue < 10 {
+            return 10  // 10% probability
+        } else if randomValue < 40 {
+            return 8   // 30% probability (10-39)
+        } else {
+            return 5   // 60% probability (40-99)
+        }
     }
 
     /// Resolves a view that applies to all the NFTs defined by this contract
@@ -204,28 +277,31 @@ access(all) contract Kart: NonFungibleToken {
     }
 
     access(all) resource NFTMinter {
-        /// 鑄造新的 NFT，檢查供應量上限
+        /// Mint a new NFT, checking supply limit
         access(all) fun createNFT(): @NFT {
-            // 檢查是否達到最大供應量上限
+            // Check if maximum supply limit is reached
             if Kart.totalSupply >= Kart.maxSupply {
-                panic("已達到最大供應量上限 (".concat(Kart.maxSupply.toString()).concat(")，無法鑄造更多 NFT"))
+                panic("Maximum supply limit reached (".concat(Kart.maxSupply.toString()).concat("), cannot mint more NFTs"))
             }
             
-            // 增加總供應量
+            // Generate random speed
+            let speed = Kart.generateRandomSpeed()
+            
+            // Increase total supply
             Kart.totalSupply = Kart.totalSupply + 1
             
-            let nft <- create NFT()
+            let nft <- create NFT(speed: speed)
             
             emit Minted(id: nft.id)
             
             return <-nft
         }
 
-        /// 批量鑄造 NFT
+        /// Batch mint NFTs
         access(all) fun batchCreateNFT(quantity: UInt64): @[NFT] {
-            // 檢查是否有足夠的剩餘供應量
+            // Check if there's enough remaining supply
             if Kart.totalSupply + quantity > Kart.maxSupply {
-                panic("批量鑄造數量超過剩餘供應量。剩餘: ".concat(Kart.getRemainingSupply().toString()).concat("，請求: ").concat(quantity.toString()))
+                panic("Batch mint quantity exceeds remaining supply. Remaining: ".concat(Kart.getRemainingSupply().toString()).concat(", Requested: ").concat(quantity.toString()))
             }
             
             var nfts: @[NFT] <- []
@@ -243,10 +319,10 @@ access(all) contract Kart: NonFungibleToken {
     }
 
     init() {
-        // 設置最大供應量為 10,000
+        // Set maximum supply to 10,000
         self.maxSupply = 10_000
         
-        // 初始化總供應量為 0
+        // Initialize total supply to 0
         self.totalSupply = 0
         
         // Set the named paths
