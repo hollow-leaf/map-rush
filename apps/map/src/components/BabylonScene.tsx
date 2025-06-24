@@ -104,7 +104,7 @@ const BabylonScene: React.FC<BabylonSceneProps> = ({ modelUrl }) => {
   return (
     <canvas
       ref={reactCanvas}
-      style={{ width: '100%', height: '100%', outline: 'none', display: 'block' }}
+      className="w-full h-full outline-none block"
     />
   );
 };

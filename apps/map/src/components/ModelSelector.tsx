@@ -18,36 +18,25 @@ const ModelSelector: React.FC<ModelSelectorProps> = ({ onSelectModel, currentMod
   ];
 
   return (
-    <div style={{
-      position: 'absolute',
-      top: '70px', // Below Navbar
-      left: '10px',
-      backgroundColor: 'rgba(255, 255, 255, 0.8)',
-      padding: '10px',
-      borderRadius: '5px',
-      zIndex: 10, // Ensure it's above the map but could be below other critical UI
-      display: 'flex',
-      flexDirection: 'column',
-      gap: '8px',
-    }}>
-      <h4>Select Model:</h4>
-      {models.map((model) => (
-        <button
-          key={model.name}
-          onClick={() => onSelectModel(model.url)}
-          style={{
-            padding: '8px 12px',
-            border: '1px solid #ccc',
-            backgroundColor: currentModelUrl === model.url || (currentModelUrl === null && model.url === null) ? '#cce5ff' : '#f0f0f0',
-            borderRadius: '4px',
-            cursor: 'pointer',
-            textAlign: 'left',
-          }}
-          disabled={currentModelUrl === model.url || (currentModelUrl === null && model.url === null)}
-        >
-          {model.name}
-        </button>
-      ))}
+    <div className="absolute top-[70px] left-[10px] bg-white bg-opacity-80 p-[10px] rounded-[5px] z-10 flex flex-col gap-[8px]">
+      <h4 className="text-sm font-semibold">Select Model:</h4>
+      {models.map((model) => {
+        const isActive = currentModelUrl === model.url || (currentModelUrl === null && model.url === null);
+        return (
+          <button
+            key={model.name}
+            onClick={() => onSelectModel(model.url)}
+            className={`
+              py-2 px-3 border border-gray-300 rounded-[4px] cursor-pointer text-left
+              ${isActive ? 'bg-blue-200' : 'bg-gray-100 hover:bg-gray-200'}
+              ${isActive ? 'cursor-default' : 'cursor-pointer'}
+            `}
+            disabled={isActive}
+          >
+            {model.name}
+          </button>
+        );
+      })}
     </div>
   );
 };

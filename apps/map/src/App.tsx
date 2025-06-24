@@ -83,26 +83,12 @@ function App() {
         <ModelSelector onSelectModel={handleModelSelect} currentModelUrl={selectedModelUrl} />
 
         {/* Babylon Scene as a centered overlay */}
-        <div style={{
-          position: 'absolute',
-          top: '50%',
-          left: '50%',
-          transform: 'translate(-50%, -50%)',
-          width: '300px', // Or a percentage
-          height: '250px', // Or a percentage
-          zIndex: 5, // Higher than map, lower than joystick/navbar if they overlay it
-          // border: '2px solid red', // For debugging layout
-        }}>
+        <div className="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 w-[300px] h-[250px] z-[5]">
           <BabylonScene modelUrl={selectedModelUrl} />
         </div>
 
         {/* Joystick Overlay */}
-        <div style={{
-          position: 'absolute',
-          bottom: '60px', // Adjusted for potentially larger joystick
-          left: '60px',  // Adjusted
-          zIndex: 10, // Highest z-index
-        }}>
+        <div className="absolute bottom-[60px] left-[60px] z-[10]">
           <Joystick onMove={handleJoystickMove} onEnd={handleJoystickEnd} size={120} stickSize={60} />
         </div>
       </div>

@@ -87,37 +87,33 @@ const Joystick: React.FC<JoystickProps> = ({
     };
   }, [isDragging]);
 
-  const baseStyle: React.CSSProperties = {
+  // Retain dynamic parts that are hard to map directly to Tailwind without knowing the full range of prop values
+  // or if arbitrary values are preferred over a fixed set of classes.
+  const baseDynamicStyle: React.CSSProperties = {
     width: `${size}px`,
     height: `${size}px`,
-    borderRadius: '50%',
     backgroundColor: baseColor,
-    display: 'flex',
-    justifyContent: 'center',
-    alignItems: 'center',
-    position: 'relative', // For stick positioning
-    touchAction: 'none', // Disable default touch actions like scrolling
-    userSelect: 'none', // Disable text selection
   };
 
-  const stickStyle: React.CSSProperties = {
+  const stickDynamicStyle: React.CSSProperties = {
     width: `${stickSize}px`,
     height: `${stickSize}px`,
-    borderRadius: '50%',
     backgroundColor: stickColor,
-    position: 'absolute',
     transform: `translate(${position.x}px, ${position.y}px)`,
-    cursor: isDragging ? 'grabbing' : 'grab',
   };
 
   return (
     <div
       ref={baseRef}
-      style={baseStyle}
+      className="rounded-full flex justify-center items-center relative touch-none select-none"
+      style={baseDynamicStyle}
       onMouseDown={handleInteractionStart}
       onTouchStart={handleInteractionStart}
     >
-      <div style={stickStyle} />
+      <div
+        className={`rounded-full absolute ${isDragging ? 'cursor-grabbing' : 'cursor-grab'}`}
+        style={stickDynamicStyle}
+      />
     </div>
   );
 };
