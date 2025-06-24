@@ -26,10 +26,14 @@ access(all) contract Kart: NonFungibleToken {
         access(all) let id: UInt64
         /// Speed attribute (10, 8, or 5)
         access(all) let speed: UInt8
+        /// Model URL based on speed
+        access(all) let model: String
 
         init(speed: UInt8) {
             self.id = self.uuid
             self.speed = speed
+            // Assign model based on speed
+            self.model = self.getModelBySpeed(speed)
         }
 
         access(all) fun createEmptyCollection(): @{NonFungibleToken.Collection} {
@@ -55,7 +59,7 @@ access(all) contract Kart: NonFungibleToken {
                     let speedRarity = self.getSpeedRarity()
                     return MetadataViews.Display(
                         name: "Kart NFT #".concat(self.id.toString()),
-                        description: "Racing NFT - Speed: ".concat(self.speed.toString()).concat(" (").concat(speedRarity).concat(")"),
+                        description: "Racing NFT - Speed: ".concat(self.speed.toString()).concat(" (").concat(speedRarity).concat(") - Model: ").concat(self.model),
                         thumbnail: MetadataViews.HTTPFile(
                             url: "https://maplibre.org/maplibre-gl-js/docs/assets/34M_17/34M_17.gltf"
                         )
@@ -81,6 +85,16 @@ access(all) contract Kart: NonFungibleToken {
                             name: "Speed",
                             value: self.speed,
                             displayType: "Number",
+                            rarity: MetadataViews.Rarity(
+                                score: self.getRarityScore(),
+                                max: 100.0,
+                                description: self.getSpeedRarity()
+                            )
+                        ),
+                        MetadataViews.Trait(
+                            name: "Model",
+                            value: self.model,
+                            displayType: "String",
                             rarity: MetadataViews.Rarity(
                                 score: self.getRarityScore(),
                                 max: 100.0,
@@ -121,6 +135,20 @@ access(all) contract Kart: NonFungibleToken {
                     return 40.0   // 60% probability, common
                 default:
                     return 0.0
+            }
+        }
+
+        /// Get model URL based on speed
+        access(all) view fun getModelBySpeed(_ speed: UInt8): String {
+            switch speed {
+                case 10:
+                    return "car"        // High speed - Car model
+                case 8:
+                    return "motorcycle" // Medium speed - Motorcycle model
+                case 5:
+                    return "bicycle"    // Low speed - Bicycle model
+                default:
+                    return "bicycle"    // Default to bicycle
             }
         }
     }

@@ -1,8 +1,8 @@
 import "NonFungibleToken"
 import "Kart"
 
-/// 獲取用戶收藏中的所有 Kart NFT ID 及其車速
-access(all) fun main(address: Address): {UInt64: UInt8} {
+/// Get all Kart NFT IDs, speeds, and models in user's collection
+access(all) fun main(address: Address): {UInt64: {String: AnyStruct}} {
     let account = getAccount(address)
 
     let collectionRef = account.capabilities.borrow<&{NonFungibleToken.Collection}>(
@@ -12,13 +12,16 @@ access(all) fun main(address: Address): {UInt64: UInt8} {
                 .concat(". The account must initialize their account with this collection first!"))
 
     let ids = collectionRef.getIDs()
-    let kartData: {UInt64: UInt8} = {}
+    let kartData: {UInt64: {String: AnyStruct}} = {}
 
-    // 我們需要借用更具體的 Collection 類型來訪問 borrowKartNFT
+    // We need to borrow the specific Collection type to access borrowKartNFT
     if let kartCollectionRef = account.capabilities.borrow<&Kart.Collection>(Kart.CollectionPublicPath) {
         for id in ids {
             if let kartNFT = kartCollectionRef.borrowKartNFT(id: id) {
-                kartData[id] = kartNFT.speed
+                kartData[id] = {
+                    "speed": kartNFT.speed,
+                    "model": kartNFT.model
+                }
             }
         }
     }
