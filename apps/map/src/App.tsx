@@ -1,15 +1,21 @@
-import { useRef, useState, useCallback, useEffect } from 'react'; // Added useEffect
+import { useRef, useState, useCallback, useEffect } from 'react';
 import maplibregl from 'maplibre-gl';
 import './App.css'
 import MapComponent from './components/map/MapComponent'
 import Navbar from './components/Navbar'
 import BabylonScene from './components/BabylonScene';
-import Joystick from './components/Joystick'; // Import Joystick
+import Joystick from './components/Joystick';
+import ModelSelector from './components/ModelSelector'; // Import ModelSelector
 
 function App() {
   const mapRef = useRef<maplibregl.Map | null>(null);
   const [joystickData, setJoystickData] = useState({ x: 0, y: 0 });
   const animationFrameRef = useRef<number | null>(null);
+  const [selectedModelUrl, setSelectedModelUrl] = useState<string | null>(null); // Default to no specific model (or your placeholder)
+
+  const handleModelSelect = (modelUrl: string | null) => {
+    setSelectedModelUrl(modelUrl);
+  };
 
   const handleMapReady = (map: maplibregl.Map) => {
     mapRef.current = map;
@@ -74,6 +80,7 @@ function App() {
       <Navbar />
       <div className="flex-grow relative"> {/* Map container takes full space */}
         <MapComponent onMapReady={handleMapReady} />
+        <ModelSelector onSelectModel={handleModelSelect} currentModelUrl={selectedModelUrl} />
 
         {/* Babylon Scene as a centered overlay */}
         <div style={{
@@ -86,7 +93,7 @@ function App() {
           zIndex: 5, // Higher than map, lower than joystick/navbar if they overlay it
           // border: '2px solid red', // For debugging layout
         }}>
-          <BabylonScene />
+          <BabylonScene modelUrl={selectedModelUrl} />
         </div>
 
         {/* Joystick Overlay */}

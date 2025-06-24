@@ -1,40 +1,41 @@
 import React, { useEffect, useRef } from 'react';
-import { Engine, Scene, ArcRotateCamera, Vector3, HemisphericLight, MeshBuilder, StandardMaterial, Color3 } from '@babylonjs/core';
+import { Engine, Scene, ArcRotateCamera, Vector3, HemisphericLight, MeshBuilder, StandardMaterial, Color3, AbstractMesh } from '@babylonjs/core';
 import * as BABYLON from '@babylonjs/core'; // For materials and colors
-import '@babylonjs/loaders'; // For potential model loading later
+import '@babylonjs/loaders'; // For GLTF model loading
+import { BabylonModelLoader } from '../lib/BabylonModelLoader'; // Import the model loader
 
 interface BabylonSceneProps {
-  // We can add props later if needed, e.g., for passing car model info or initial settings
+  modelUrl: string | null; // URL of the model to load, or null to show default/no model
 }
 
-const BabylonScene: React.FC<BabylonSceneProps> = () => {
+const BabylonScene: React.FC<BabylonSceneProps> = ({ modelUrl }) => {
   const reactCanvas = useRef<HTMLCanvasElement | null>(null);
+  const modelLoaderRef = useRef<BabylonModelLoader | null>(null);
+  const sceneRef = useRef<Scene | null>(null); // Keep a ref to the scene for cleanup
 
   useEffect(() => {
     if (reactCanvas.current) {
       const engine = new Engine(reactCanvas.current, true);
       const scene = new Scene(engine);
+      sceneRef.current = scene; // Store scene for cleanup
+      modelLoaderRef.current = new BabylonModelLoader(scene);
 
       // Create a camera
-      // ArcRotateCamera(name, alpha, beta, radius, target, scene)
       const camera = new ArcRotateCamera("camera", -Math.PI / 2, Math.PI / 2.5, 10, Vector3.Zero(), scene);
       camera.attachControl(reactCanvas.current, true);
+      camera.wheelPrecision = 50; // Adjust zoom sensitivity
 
       // Create a basic light
-      new HemisphericLight("light", new Vector3(0, 1, 0), scene);
+      new HemisphericLight("light1", new Vector3(1, 1, 0), scene);
+      new HemisphericLight("light2", new Vector3(-1, 1, 0), scene);
 
-      // Create a placeholder for the car (e.g., a box)
-      // This will be at the center of the scene (0,0,0) by default
-      const carPlaceholder = MeshBuilder.CreateBox("carPlaceholder", { size: 1 }, scene);
-      carPlaceholder.position.y = 0.5; // Adjust if needed so it's not halfway through a ground plane
 
       // Simple ground plane (optional, but good for orientation)
       const ground = MeshBuilder.CreateGround("ground", { width: 20, height: 20 }, scene);
       ground.material = new BABYLON.StandardMaterial("groundMat", scene);
       (ground.material as BABYLON.StandardMaterial).diffuseColor = new BABYLON.Color3(0.5, 0.5, 0.5);
 
-
-      // Add some placeholder boxes around the car
+      // Placeholder obstacles - these can remain or be made dynamic later
       const box1 = MeshBuilder.CreateBox("box1", { size: 2 }, scene);
       box1.position = new Vector3(5, 1, 5);
       const mat1 = new BABYLON.StandardMaterial("box1Mat", scene);
@@ -53,7 +54,6 @@ const BabylonScene: React.FC<BabylonSceneProps> = () => {
       mat3.diffuseColor = new BABYLON.Color3(0, 0, 1); // Blue
       box3.material = mat3;
 
-
       engine.runRenderLoop(() => {
         scene.render();
       });
@@ -67,11 +67,39 @@ const BabylonScene: React.FC<BabylonSceneProps> = () => {
       // Cleanup
       return () => {
         window.removeEventListener('resize', handleResize);
-        scene.dispose();
+        // modelLoaderRef.current?.removeCurrentModel(); // Ensure model is disposed
+        if (sceneRef.current) {
+          sceneRef.current.dispose();
+        }
         engine.dispose();
       };
     }
-  }, [reactCanvas]);
+  }, [reactCanvas]); // Initial setup effect, only runs once
+
+  useEffect(() => {
+    // Effect for loading/changing models when modelUrl prop changes
+    if (modelLoaderRef.current) {
+      modelLoaderRef.current.removeCurrentModel(); // Remove previous model
+
+      if (modelUrl) {
+        // For the new car model, let's try to scale and position it reasonably
+        // These values might need adjustment based on the actual model's origin and scale
+        const modelConfig = {
+            baseScale: new Vector3(0.5, 0.5, 0.5), // Example scale, adjust as needed
+            positionOffset: new Vector3(0, 0, 0), // Adjust if the model's pivot isn't at its base center
+            rotationOffset: new Vector3(0, Math.PI / 2, 0) // Rotate if needed (radians)
+        };
+        modelLoaderRef.current.loadCarModel(modelUrl, modelConfig)
+          .then((loadedModel) => {
+            if (loadedModel) {
+              // Optional: further adjustments after model is loaded
+              loadedModel.position.y = 0; // Example: ensure it's on the ground
+            }
+          })
+          .catch(error => console.error("Error loading model in component:", error));
+      }
+    }
+  }, [modelUrl]); // This effect runs when modelUrl changes
 
   return (
     <canvas
