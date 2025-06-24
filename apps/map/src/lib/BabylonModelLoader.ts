@@ -69,4 +69,13 @@ export class BabylonModelLoader {
     public getBabylonOrigin(): Vector3 | null {
         return this.babylonOrigin;
     }
+
+    public removeCurrentModel(): void {
+        if (this.carModel) {
+            this.carModel.dispose(); // Dispose of the mesh and its resources
+            this.carModel = null;
+            this.babylonOrigin = null;
+            console.log("BabylonModelLoader: Current model removed.");
+        }
+    }
 }
