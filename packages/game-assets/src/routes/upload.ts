@@ -1,5 +1,5 @@
 import { t } from 'elysia'
-import { Synapse } from '@filoz/synapse-sdk'
+import { Synapse, TOKENS, CONTRACT_ADDRESSES } from '@filoz/synapse-sdk'
 import { ethers } from 'ethers'
 
 // Configuration from environment - User will need to set these
@@ -26,6 +26,12 @@ async function fileToBuffer(file: File | Blob): Promise<Buffer> {
   return Buffer.from(arrayBuffer);
 }
 
+// Helper to format USDFC amounts (18 decimals)
+function formatUSDFC (amount: bigint) {
+  const usdfc = Number(amount) / 1e18
+  return usdfc.toFixed(6) + ' USDFC'
+}
+
 export const upload = async (body: {file: File[] | File}) => {
   if (!PRIVATE_KEY) {
     throw new Error("PRIVATE_KEY environment variable is not set.");
@@ -49,6 +55,39 @@ export const upload = async (body: {file: File[] | File}) => {
       privateKey: PRIVATE_KEY,
       rpcURL: RPC_URL
     })
+
+    const pandoraAddress = CONTRACT_ADDRESSES.PANDORA_SERVICE[synapse.getNetwork()]
+    let serviceStatus = await synapse.payments.serviceApproval(pandoraAddress)
+
+    if (!serviceStatus.isApproved) {
+      console.log('\n--- Checking Balances ---')
+      const filBalance = await synapse.payments.walletBalance()
+      const usdfcBalance = await synapse.payments.walletBalance('USDFC')
+      console.log(`FIL balance: ${Number(filBalance) / 1e18} FIL`)
+      console.log(`USDFC balance: ${formatUSDFC(usdfcBalance)}`)
+
+      // 1. Deposit USDFC tokens (one-time setup)
+      const amount = ethers.parseUnits('10', 18)  // 10 USDFC
+      await synapse.payments.deposit(amount, TOKENS.USDFC)
+      console.log(`✓ Deposited ${formatUSDFC(amount)}`)
+
+      // 2. Approve the Pandora service for automated payments
+      await synapse.payments.approveService(
+        pandoraAddress,
+        ethers.parseUnits('10', 18),   // Rate allowance: 10 USDFC per epoch
+        ethers.parseUnits('1000', 18)  // Lockup allowance: 1000 USDFC total
+      )
+      console.log(`✓ Approved Pandora service for payments`)
+
+      // Poll until the service is approved
+      serviceStatus = await synapse.payments.serviceApproval(pandoraAddress)
+      while (!serviceStatus.isApproved) {
+        console.log('Waiting for service approval...')
+        await new Promise(resolve => setTimeout(resolve, 5000)) // Wait 5 seconds
+        serviceStatus = await synapse.payments.serviceApproval(pandoraAddress)
+      }
+      console.log('✓ Service is approved')
+    }
 
     // Create storage service
     const storageService = await synapse.createStorage({
