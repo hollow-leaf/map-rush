@@ -20,7 +20,8 @@ access(all) fun main(address: Address): {UInt64: {String: AnyStruct}} {
             if let kartNFT = kartCollectionRef.borrowKartNFT(id: id) {
                 kartData[id] = {
                     "speed": kartNFT.speed,
-                    "model": kartNFT.model
+                    "model": kartNFT.model,
+                    "rarity": kartNFT.getSpeedRarity()
                 }
             }
         }

@@ -255,17 +255,26 @@ access(all) contract Kart: NonFungibleToken {
     /// Speed 8:  30% probability (10-39)  
     /// Speed 5:  60% probability (40-99)
     access(all) view fun generateRandomSpeed(): UInt8 {
-        // Use block height and total supply as random seed
+        // Use multiple sources for better randomness
         let blockHeight = getCurrentBlock().height
-        let randomSeed = UInt64(blockHeight) + self.totalSupply
-        let randomValue = randomSeed % 100  // 0-99
+        let blockTimestamp = getCurrentBlock().timestamp
+        let totalSupply = self.totalSupply
+        
+        // Combine multiple sources and use a more complex calculation
+        let seed1 = UInt64(blockHeight) * 7919  // Large prime
+        let seed2 = UInt64(blockTimestamp) * 6131  // Another large prime
+        let seed3 = totalSupply * 4993  // Another large prime
+        
+        // Mix the seeds together
+        let combinedSeed = (seed1 + seed2 + seed3) * 9973  // Final mixing with large prime
+        let randomValue = combinedSeed % 100  // 0-99
 
         if randomValue < 10 {
-            return 10  // 10% probability
+            return 10  // 10% probability (rare)
         } else if randomValue < 40 {
-            return 8   // 30% probability (10-39)
+            return 8   // 30% probability (uncommon) 
         } else {
-            return 5   // 60% probability (40-99)
+            return 5   // 60% probability (common)
         }
     }
 
@@ -302,6 +311,66 @@ access(all) contract Kart: NonFungibleToken {
                 )
         }
         return nil
+    }
+
+    /// Free mint function - allows anyone to mint NFTs for free
+    /// @param recipient: The address that will receive the minted NFT
+    access(all) fun freeMint(recipient: Address) {
+        // Check if maximum supply limit is reached
+        if self.totalSupply >= self.maxSupply {
+            panic("Maximum supply limit reached (".concat(self.maxSupply.toString()).concat("), cannot mint more NFTs"))
+        }
+        
+        // Get the minter reference from contract storage
+        let minter = self.account.storage.borrow<&NFTMinter>(from: self.MinterStoragePath)
+            ?? panic("Could not borrow minter reference from contract storage")
+        
+        // Mint the NFT
+        let mintedNFT <- minter.createNFT()
+        
+        // Get the recipient's collection reference
+        let recipientCollectionRef = getAccount(recipient).capabilities.borrow<&Kart.Collection>(
+                self.CollectionPublicPath
+        ) ?? panic("The recipient account does not have a Kart Collection at "
+                    .concat(self.CollectionPublicPath.toString())
+                    .concat(". The recipient must initialize their account with this collection first!"))
+        
+        // Deposit the NFT to the recipient's collection
+        recipientCollectionRef.deposit(token: <-mintedNFT)
+    }
+
+    /// Batch free mint function - allows anyone to mint multiple NFTs for free
+    /// @param recipient: The address that will receive the minted NFTs
+    /// @param quantity: Number of NFTs to mint (maximum 10 per transaction)
+    access(all) fun batchFreeMint(recipient: Address, quantity: UInt64) {
+        // Limit batch size to prevent transaction timeout
+        if quantity > 10 {
+            panic("Batch mint quantity cannot exceed 10 NFTs per transaction")
+        }
+        
+        // Check if there's enough remaining supply
+        if self.totalSupply + quantity > self.maxSupply {
+            panic("Batch mint quantity exceeds remaining supply. Remaining: ".concat(self.getRemainingSupply().toString()).concat(", Requested: ").concat(quantity.toString()))
+        }
+        
+        // Get the minter reference from contract storage
+        let minter = self.account.storage.borrow<&NFTMinter>(from: self.MinterStoragePath)
+            ?? panic("Could not borrow minter reference from contract storage")
+        
+        // Get the recipient's collection reference
+        let recipientCollectionRef = getAccount(recipient).capabilities.borrow<&Kart.Collection>(
+                self.CollectionPublicPath
+        ) ?? panic("The recipient account does not have a Kart Collection at "
+                    .concat(self.CollectionPublicPath.toString())
+                    .concat(". The recipient must initialize their account with this collection first!"))
+        
+        // Mint and deposit NFTs one by one
+        var i: UInt64 = 0
+        while i < quantity {
+            let mintedNFT <- minter.createNFT()
+            recipientCollectionRef.deposit(token: <-mintedNFT)
+            i = i + 1
+        }
     }
 
     access(all) resource NFTMinter {
