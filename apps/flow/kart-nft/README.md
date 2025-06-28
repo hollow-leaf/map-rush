@@ -31,7 +31,34 @@ Inside the `cadence` folder you will find:
 - `/tests` - This folder contains your Cadence tests (integration tests for your contracts, scripts, and transactions to verify they behave as expected)
   - `Kart_test.cdc`
 
-## Running the Existing Project
+## Deploy to Flow testnet
+### Create account (testnet)
+
+Create a new Flow testnet account and configure it as `testnet-acct` in your `flow.json`:
+
+```shell
+flow accounts create --network=testnet
+```
+
+This will create a new account and automatically add it to your `flow.json` deployments configuration.
+
+### Fund your testnet account
+
+Before deploying, you need to fund your testnet account with test FLOW tokens. Visit the Flow testnet faucet:
+
+🚰 **[https://testnet-faucet.onflow.org/fund-account/](https://testnet-faucet.onflow.org/fund-account/)**
+
+Enter your testnet account address to receive test FLOW tokens needed for deployment and transactions.
+
+### Start deploy the contract
+
+Once your account is funded, deploy the contract to testnet:
+
+```shell
+flow project deploy --network=testnet
+```
+
+## Deploy to emulator network
 ### Start emulator network
 
 ```shell
@@ -43,8 +70,7 @@ flow emulator start
 ```shell
 flow project deploy
 ```
-
-### Create emulator account
+### Create account
 
 ```shell
 flow accounts create

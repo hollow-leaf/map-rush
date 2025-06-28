@@ -1,6 +1,6 @@
 import "Kart"
 
-/// 檢查當前供應量和剩餘數量
+/// Check current supply and remaining quantity
 access(all) fun main(): {String: UInt64} {
     return {
         "maxSupply": Kart.maxSupply,

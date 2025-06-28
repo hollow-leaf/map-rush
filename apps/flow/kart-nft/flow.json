@@ -51,16 +51,8 @@
 				"location": "emulator-account.pkey"
 			}
 		},
-		"test-acct": {
-			"address": "179b6b1cb6755e31",
-			"key": "5fca837a77dbde9615c2ac90bcb05f7fcd59c0bf0af9d614535a35aaad9a1913"
-		},
-		"test-acct-2": {
-			"address": "f3fcd2c1a78f5eee",
-			"key": "e40e9aac450f9d8cf5df0bbba9293d01aef7635ad1225da1df2ebbb3b7847f7e"
-		},
 		"testnet-acct": {
-			"address": "f2f4e196da8930b6",
+			"address": "e30b5ab6820d3e32",
 			"key": {
 				"type": "file",
 				"location": "testnet-acct.pkey"
@@ -70,6 +62,11 @@
 	"deployments": {
 		"emulator": {
 			"emulator-account": [
+				"Kart"
+			]
+		},
+		"testnet": {
+			"testnet-acct": [
 				"Kart"
 			]
 		}
