@@ -1,5 +1,5 @@
 {
-  "name": "map",
+  "name": "kart-magic-link-vite",
   "private": true,
   "version": "0.0.0",
   "type": "module",
@@ -10,15 +10,17 @@
     "preview": "vite preview"
   },
   "dependencies": {
-    "@babylonjs/core": "^7.11.0",
-    "@babylonjs/loaders": "^7.11.0",
-    "@tailwindcss/vite": "^4.1.10",
-    "@types/three": "^0.177.0",
-    "maplibre-gl": "^4.1.2",
+    "@magic-ext/flow": "^16.0.0",
+    "@magic-ext/oauth": "^23.0.3",
+    "@onflow/fcl": "^1.6.0",
+    "classnames": "^2.3.2",
+    "magic-sdk": "^29.0.2",
     "react": "^19.1.0",
     "react-dom": "^19.1.0",
-    "react-toastify": "^11.0.5",
-    "three": "^0.177.0"
+    "react-toastify": "^10.0.6",
+    "tailwindcss": "^3.4.0",
+    "autoprefixer": "^10.4.16",
+    "postcss": "^8.4.31"
   },
   "devDependencies": {
     "@eslint/js": "^9.25.0",

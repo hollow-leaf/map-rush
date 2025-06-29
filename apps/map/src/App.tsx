@@ -7,11 +7,23 @@ import BabylonScene from './components/BabylonScene';
 import Joystick from './components/Joystick';
 import ModelSelector from './components/ModelSelector'; // Import ModelSelector
 
+import MagicProvider from './components/magic/MagicProvider'
+import { ToastContainer } from 'react-toastify'
+import 'react-toastify/dist/ReactToastify.css'
+import Login from '@/components/magic/Login'
+import Dashboard from '@/components/magic/Dashboard'
+import MagicDashboardRedirect from '@/components/magic/MagicDashboardRedirect'
+
 function App() {
   const mapRef = useRef<maplibregl.Map | null>(null);
   const [joystickData, setJoystickData] = useState({ x: 0, y: 0 });
   const animationFrameRef = useRef<number | null>(null);
   const [selectedModelUrl, setSelectedModelUrl] = useState<string | null>(null); // Default to no specific model (or your placeholder)
+  const [token, setToken] = useState('')
+
+  useEffect(() => {
+    setToken(localStorage.getItem('token') ?? '')
+  }, [setToken])
 
   const handleModelSelect = (modelUrl: string | null) => {
     setSelectedModelUrl(modelUrl);
@@ -76,23 +88,35 @@ function App() {
 
 
   return (
-    <div className="flex flex-col h-[100vh] w-[100vw] overflow-hidden">
-      <Navbar />
-      <div className="flex-grow relative"> {/* Map container takes full space */}
-        <MapComponent onMapReady={handleMapReady} />
-        <ModelSelector onSelectModel={handleModelSelect} currentModelUrl={selectedModelUrl} />
+    <MagicProvider>
+      <ToastContainer />
+      {import.meta.env.VITE_MAGIC_API_KEY ? (
+        token.length > 0 ? (
+          // <Dashboard token={token} setToken={setToken} />
+          <div className="flex flex-col h-[100vh] w-[100vw] overflow-hidden">
+            <Navbar token={token} setToken={setToken} />
+            <div className="flex-grow relative"> {/* Map container takes full space */}
+              <MapComponent onMapReady={handleMapReady} />
+              <ModelSelector onSelectModel={handleModelSelect} currentModelUrl={selectedModelUrl} />
 
-        {/* Babylon Scene as a centered overlay */}
-        <div className="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 w-[300px] h-[250px] z-[5]">
-          <BabylonScene modelUrl={selectedModelUrl} />
-        </div>
+              {/* Babylon Scene as a centered overlay */}
+              <div className="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 w-[300px] h-[250px] z-[5]">
+                <BabylonScene modelUrl={selectedModelUrl} />
+              </div>
 
-        {/* Joystick Overlay */}
-        <div className="absolute bottom-[60px] left-[60px] z-[10]">
-          <Joystick onMove={handleJoystickMove} onEnd={handleJoystickEnd} size={120} stickSize={60} />
-        </div>
-      </div>
-    </div>
+              {/* Joystick Overlay */}
+              <div className="absolute bottom-[60px] left-[60px] z-[10]">
+                <Joystick onMove={handleJoystickMove} onEnd={handleJoystickEnd} size={120} stickSize={60} />
+              </div>
+            </div>
+          </div>
+        ) : (
+          <Login token={token} setToken={setToken} />
+        )
+      ) : (
+        <MagicDashboardRedirect />
+      )}
+    </MagicProvider>
   )
 }
 
