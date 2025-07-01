@@ -74,8 +74,8 @@ const Navbar: React.FC<LoginProps> = ({ token, setToken }) => {
               {publicAddress ? `${publicAddress.slice(0, 6)}...${publicAddress.slice(-4)}` : 'Not Connected'}
             </span>
           </li>
-          <li><a href="#" className="hover:text-gray-400">Home</a></li>
-          <li><a href="#" className="hover:text-gray-400">About</a></li>
+          <li><a href="/" className="hover:text-gray-400">Home</a></li>
+          <li><a href="/my-kart-list" className="hover:text-gray-400">MyKarts</a></li>
           <li><a href="#" className="hover:text-gray-400">Contact</a></li>
         </ul>
       </div>
@@ -88,8 +88,8 @@ const Navbar: React.FC<LoginProps> = ({ token, setToken }) => {
                 {publicAddress ? `${publicAddress.slice(0, 6)}...${publicAddress.slice(-4)}` : 'Not Connected'}
               </span>
             </li>
-            <li><a href="#" className="hover:text-gray-400 block px-2 py-1">Home</a></li>
-            <li><a href="#" className="hover:text-gray-400 block px-2 py-1">About</a></li>
+            <li><a href="/" className="hover:text-gray-400 block px-2 py-1">Home</a></li>
+            <li><a href="/my-kart-list" className="hover:text-gray-400 block px-2 py-1">MyKarts</a></li>
             <li><a href="#" className="hover:text-gray-400 block px-2 py-1">Contact</a></li>
           </ul>
         </div>
