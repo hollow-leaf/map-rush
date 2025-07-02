@@ -15,12 +15,14 @@
     "@magic-ext/flow": "^24.1.0",
     "@onflow/fcl": "^1.19.0",
     "@tailwindcss/vite": "^4.1.10",
+    "@tanstack/react-router": "^1.124.0",
     "@types/three": "^0.177.0",
     "magic-sdk": "^29.1.0",
     "maplibre-gl": "^4.1.2",
     "react": "^19.1.0",
     "react-dom": "^19.1.0",
     "react-toastify": "^11.0.5",
+    "tailwindcss": "^4.1.11",
     "three": "^0.177.0"
   },
   "devDependencies": {

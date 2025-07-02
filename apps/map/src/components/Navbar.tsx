@@ -1,9 +1,8 @@
 import React, { useState, useCallback, useEffect } from 'react';
 import type { LoginProps } from '@/utils/types'
-import { useMagic } from '@/components/magic/MagicProvider';
+import { useMagic, Disconnect } from '@/components/MagicAuth'; // Updated import
 import * as fcl from '@onflow/fcl'
 import { convertAccountBalance } from '@/utils/flowUtils'
-import { logout } from '@/utils/common'
 
 const Navbar: React.FC<LoginProps> = ({ token, setToken }) => {
   const [isOpen, setIsOpen] = useState(false);
@@ -49,11 +48,12 @@ const Navbar: React.FC<LoginProps> = ({ token, setToken }) => {
     }, 500)
   }, [getBalance])
 
-  const disconnect = useCallback(async () => {
-    if (magic) {
-      await logout(setToken, magic)
-    }
-  }, [magic, setToken])
+  // Disconnect logic is now handled by the Disconnect component from MagicAuth
+  // const disconnect = useCallback(async () => {
+  //   if (magic) {
+  //     await logout(setToken, magic)
+  //   }
+  // }, [magic, setToken])
 
   return (
     <nav className="bg-gray-800 text-white p-4">
@@ -74,9 +74,14 @@ const Navbar: React.FC<LoginProps> = ({ token, setToken }) => {
               {publicAddress ? `${publicAddress.slice(0, 6)}...${publicAddress.slice(-4)}` : 'Not Connected'}
             </span>
           </li>
-          <li><a href="#" className="hover:text-gray-400">Home</a></li>
-          <li><a href="#" className="hover:text-gray-400">About</a></li>
-          <li><a href="#" className="hover:text-gray-400">Contact</a></li>
+          <li><a href="/" className="hover:text-gray-400">Home</a></li>
+          <li><a href="/my-kart-list" className="hover:text-gray-400">MyKarts</a></li>
+          {/* <li><a href="#" className="hover:text-gray-400">Contact</a></li> */}
+          {token && (
+            <li>
+              <Disconnect setToken={setToken} />
+            </li>
+          )}
         </ul>
       </div>
       {/* Collapsible menu for mobile */}
@@ -88,9 +93,14 @@ const Navbar: React.FC<LoginProps> = ({ token, setToken }) => {
                 {publicAddress ? `${publicAddress.slice(0, 6)}...${publicAddress.slice(-4)}` : 'Not Connected'}
               </span>
             </li>
-            <li><a href="#" className="hover:text-gray-400 block px-2 py-1">Home</a></li>
-            <li><a href="#" className="hover:text-gray-400 block px-2 py-1">About</a></li>
-            <li><a href="#" className="hover:text-gray-400 block px-2 py-1">Contact</a></li>
+            <li><a href="/" className="hover:text-gray-400 block px-2 py-1">Home</a></li>
+            <li><a href="/my-kart-list" className="hover:text-gray-400 block px-2 py-1">MyKarts</a></li>
+            {/* <li><a href="#" className="hover:text-gray-400 block px-2 py-1">Contact</a></li> */}
+            {token && (
+            <li className="px-2 py-1">
+              <Disconnect setToken={setToken} />
+            </li>
+          )}
           </ul>
         </div>
       )}
