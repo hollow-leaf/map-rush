@@ -82,7 +82,7 @@ const Navbar: React.FC<NavbarProps> = ({ token, setToken, toggleTheme, currentTh
             <ul tabIndex={0} className="menu menu-sm dropdown-content mt-3 z-[1] p-2 shadow bg-base-100 rounded-box w-52">
               <li>
                 <span className="justify-between">
-                  Profile
+                  <Link to="/about">Profile</Link>
                   <span className="badge"> {publicAddress ? `${publicAddress.slice(0, 4)}...${publicAddress.slice(-3)}` : 'N/A'}</span>
                 </span>
               </li>

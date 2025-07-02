@@ -16,7 +16,7 @@ interface MapState {
 export const useMapStore = create<MapState>((set) => ({
   center: [-74.006, 40.7128], // Initial New York City
   zoom: 19,
-  pitch: 85,
+  pitch: 90,
   bearing: 0,
   setCenter: (center) => set({ center }),
   setZoom: (zoom) => set({ zoom }),
