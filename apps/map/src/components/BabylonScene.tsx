@@ -1,5 +1,5 @@
 import React, { useEffect, useRef } from 'react';
-import { Engine, Scene, ArcRotateCamera, Vector3, HemisphericLight, MeshBuilder, StandardMaterial, Color3, AbstractMesh } from '@babylonjs/core';
+import { Engine, Scene, ArcRotateCamera, Vector3, HemisphericLight, MeshBuilder } from '@babylonjs/core';
 import * as BABYLON from '@babylonjs/core'; // For materials and colors
 import '@babylonjs/loaders'; // For GLTF model loading
 import { BabylonModelLoader } from '../lib/BabylonModelLoader'; // Import the model loader
@@ -15,6 +15,7 @@ const BabylonScene: React.FC<BabylonSceneProps> = ({ modelUrl }) => {
 
   useEffect(() => {
     if (reactCanvas.current) {
+      // for test basic theme
       const engine = new Engine(reactCanvas.current, true);
       const scene = new Scene(engine);
       sceneRef.current = scene; // Store scene for cleanup
@@ -41,19 +42,7 @@ const BabylonScene: React.FC<BabylonSceneProps> = ({ modelUrl }) => {
       const mat1 = new BABYLON.StandardMaterial("box1Mat", scene);
       mat1.diffuseColor = new BABYLON.Color3(1, 0, 0); // Red
       box1.material = mat1;
-
-      const box2 = MeshBuilder.CreateBox("box2", { size: 1.5 }, scene);
-      box2.position = new Vector3(-4, 0.75, 3);
-      const mat2 = new BABYLON.StandardMaterial("box2Mat", scene);
-      mat2.diffuseColor = new BABYLON.Color3(0, 1, 0); // Green
-      box2.material = mat2;
-
-      const box3 = MeshBuilder.CreateBox("box3", { size: 1 }, scene);
-      box3.position = new Vector3(3, 0.5, -4);
-      const mat3 = new BABYLON.StandardMaterial("box3Mat", scene);
-      mat3.diffuseColor = new BABYLON.Color3(0, 0, 1); // Blue
-      box3.material = mat3;
-
+      
       engine.runRenderLoop(() => {
         scene.render();
       });

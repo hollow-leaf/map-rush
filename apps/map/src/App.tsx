@@ -32,17 +32,17 @@ function App() {
 
   return (
     <MagicProvider>
-      <ToastContainer />
-      {token.length > 0 ? (
-        <div className="flex flex-col h-[100vh] w-[100vw] overflow-hidden">
-          <Navbar token={token} setToken={setToken} toggleTheme={toggleTheme} currentTheme={theme} />
-          <div className="flex-grow overflow-auto"> 
-            <Outlet />
-          </div>
-        </div>
-      ) : (
-        <Login token={token} setToken={setToken} />
-      )}
+      <div className="flex flex-col h-[100vh] w-[100vw] overflow-hidden">
+        <Navbar token={token} setToken={setToken} toggleTheme={toggleTheme} currentTheme={theme} />
+        <ToastContainer />
+        {token.length > 0 ? (
+            <div className="flex-grow overflow-auto"> 
+              <Outlet />
+            </div>
+        ) : (
+          <Login token={token} setToken={setToken} />
+        )}
+      </div>
     </MagicProvider>
   );
 }

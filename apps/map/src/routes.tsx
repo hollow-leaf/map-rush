@@ -3,6 +3,7 @@ import App from './App';
 import Home from './pages/Home';
 import MyKartList from './pages/MyKartList';
 import { Login, UserInfo } from '@/components/magic/MagicAuth'; // Assuming Login and UserInfo might be separate routes or handled within App
+import About from './pages/About';
 
 // Create a root route
 const rootRoute = new RootRoute({
@@ -22,10 +23,17 @@ const myKartListRoute = new Route({
   component: MyKartList,
 });
 
+const aboutRoute = new Route({
+  getParentRoute: () => rootRoute,
+  path: '/about',
+  component: About,
+});
+
 // Create the route tree
 const routeTree = rootRoute.addChildren([
   indexRoute,
   myKartListRoute,
+  aboutRoute
 ]);
 
 // Create the router instance

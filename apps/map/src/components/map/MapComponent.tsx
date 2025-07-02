@@ -62,7 +62,7 @@ export default function MapComponent({ onMapReady }: { onMapReady: (map: maplibr
                       'interpolate',
                       ['linear'],
                       ['zoom'],
-                      15,
+                      11,
                       0,
                       16,
                       ['get', 'render_height']
