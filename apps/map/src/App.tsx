@@ -1,43 +1,40 @@
-import { useRef, useState, useCallback, useEffect } from 'react';
-import './App.css'
-import 'react-toastify/dist/ReactToastify.css'
-import { Routes, Route } from 'react-router-dom';
-import MyKartList from './pages/MyKartList';
-import Home from './pages/Home';
-import MagicProvider from '@/components/magic/MagicProvider'
-import { ToastContainer } from 'react-toastify'
-import 'react-toastify/dist/ReactToastify.css'
-import Login from '@/components/magic/Login'
-import MagicDashboardRedirect from '@/components/magic/MagicDashboardRedirect'
+import { useState, useEffect } from 'react';
+import './App.css';
+import 'react-toastify/dist/ReactToastify.css';
+import { Outlet } from '@tanstack/react-router'; // Import Outlet
+import { MagicProvider, Login } from '@/components/MagicAuth';
+import { ToastContainer } from 'react-toastify';
 import Navbar from './components/Navbar';
 
 function App() {
-  const [token, setToken] = useState('')
+  const [token, setToken] = useState(localStorage.getItem('token') ?? '');
 
   useEffect(() => {
-    setToken(localStorage.getItem('token') ?? '')
-  }, [setToken])
+    // Update token state if localStorage changes (e.g., after login/logout)
+    const handleStorageChange = () => {
+      setToken(localStorage.getItem('token') ?? '');
+    };
+    window.addEventListener('storage', handleStorageChange);
+    return () => {
+      window.removeEventListener('storage', handleStorageChange);
+    };
+  }, []);
 
   return (
     <MagicProvider>
       <ToastContainer />
-      {import.meta.env.VITE_MAGIC_API_KEY ? (
-        token.length > 0 ? (
-          <div className="flex flex-col h-[100vh] w-[100vw] overflow-hidden">
-            <Navbar token={token} setToken={setToken} />
-            <Routes>
-              <Route path="/" element={<Home token={token} setToken={setToken} />} />
-              <Route path="/my-kart-list" element={<MyKartList token={token} setToken={setToken} />} />
-            </Routes>
+      {token.length > 0 ? (
+        <div className="flex flex-col h-[100vh] w-[100vw] overflow-hidden">
+          <Navbar token={token} setToken={setToken} />
+          <div className="flex-grow overflow-auto"> 
+            <Outlet />
           </div>
-        ) : (
-          <Login token={token} setToken={setToken} />
-        )
+        </div>
       ) : (
-        <MagicDashboardRedirect />
+        <Login token={token} setToken={setToken} />
       )}
     </MagicProvider>
-  )
+  );
 }
 
-export default App
+export default App;

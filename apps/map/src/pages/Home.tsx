@@ -2,20 +2,23 @@ import { useRef, useState, useCallback, useEffect } from 'react';
 import maplibregl from 'maplibre-gl';
 import '../App.css'
 import MapComponent from '@/components/map/MapComponent'
-import Navbar from '@/components/Navbar'
+// Navbar is now part of App.tsx layout
+// import Navbar from '@/components/Navbar' 
 import BabylonScene from '@/components/BabylonScene';
 import Joystick from '@/components/Joystick';
 import ModelSelector from '@/components/ModelSelector'; // Import ModelSelector
 
-import type { LoginProps } from '@/utils/types'
+// LoginProps, MagicProvider, ToastContainer, Login, MagicDashboardRedirect are not needed here
+// as authentication and layout are handled by App.tsx and router
+// import type { LoginProps } from '@/utils/types'
+// import MagicProvider from '@/components/magic/MagicProvider'
+// import { ToastContainer } from 'react-toastify'
+// import 'react-toastify/dist/ReactToastify.css'
+// import Login from '@/components/magic/Login'
+// import MagicDashboardRedirect from '@/components/magic/MagicDashboardRedirect'
 
-import MagicProvider from '@/components/magic/MagicProvider'
-import { ToastContainer } from 'react-toastify'
-import 'react-toastify/dist/ReactToastify.css'
-import Login from '@/components/magic/Login'
-import MagicDashboardRedirect from '@/components/magic/MagicDashboardRedirect'
-
-const Home: React.FC<LoginProps> = ({ token, setToken }) => {
+// const Home: React.FC<LoginProps> = ({ token, setToken }) => {
+const Home: React.FC = () => {
 
   const mapRef = useRef<maplibregl.Map | null>(null);
   const [joystickData, setJoystickData] = useState({ x: 0, y: 0 });
@@ -83,29 +86,25 @@ const Home: React.FC<LoginProps> = ({ token, setToken }) => {
     };
   }, [joystickData, mapRef]);
 
-
+  // The conditional rendering based on token is removed as App.tsx handles this
   return (
-    token.length > 0 ? (
-      // <Dashboard token={token} setToken={setToken} />
-      <div className="flex flex-col h-[100vh] w-[100vw] overflow-hidden">
-        <div className="flex-grow relative"> {/* Map container takes full space */}
-          <MapComponent onMapReady={handleMapReady} />
-          <ModelSelector onSelectModel={handleModelSelect} currentModelUrl={selectedModelUrl} />
+    // <Dashboard token={token} setToken={setToken} />
+    // The outer div for h-[100vh] w-[100vw] is now in App.tsx
+    // This component should only render its specific content
+    <div className="flex-grow relative"> {/* Map container takes full space */}
+      <MapComponent onMapReady={handleMapReady} />
+      <ModelSelector onSelectModel={handleModelSelect} currentModelUrl={selectedModelUrl} />
 
-          {/* Babylon Scene as a centered overlay */}
-          <div className="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 w-[300px] h-[250px] z-[5]">
-            <BabylonScene modelUrl={selectedModelUrl} />
-          </div>
-
-          {/* Joystick Overlay */}
-          <div className="absolute bottom-[60px] left-[60px] z-[10]">
-            <Joystick onMove={handleJoystickMove} onEnd={handleJoystickEnd} size={120} stickSize={60} />
-          </div>
-        </div>
+      {/* Babylon Scene as a centered overlay */}
+      <div className="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 w-[300px] h-[250px] z-[5]">
+        <BabylonScene modelUrl={selectedModelUrl} />
       </div>
-    ) : (
-      <Login token={token} setToken={setToken} />
-    )
+
+      {/* Joystick Overlay */}
+      <div className="absolute bottom-[60px] left-[60px] z-[10]">
+        <Joystick onMove={handleJoystickMove} onEnd={handleJoystickEnd} size={120} stickSize={60} />
+      </div>
+    </div>
   )
 }
 
