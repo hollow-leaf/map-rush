@@ -2,7 +2,7 @@ import { useState, useEffect } from 'react';
 import './App.css';
 import 'react-toastify/dist/ReactToastify.css';
 import { Outlet } from '@tanstack/react-router'; // Import Outlet
-import { MagicProvider, Login } from '@/components/MagicAuth';
+import { MagicProvider, Login } from '@/components/magic/MagicAuth';
 import { ToastContainer } from 'react-toastify';
 import Navbar from './components/Navbar';
 

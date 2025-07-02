@@ -5,12 +5,8 @@ import { Magic as MagicBase } from 'magic-sdk';
 import { FlowExtension } from '@magic-ext/flow';
 import * as fcl from '@onflow/fcl';
 import showToast from '@/utils/showToast';
-import Spinner from '@/components/ui/Spinner';
 import { RPCError, RPCErrorCode } from 'magic-sdk';
 import { saveToken, logout } from '@/utils/common';
-import Card from '@/components/ui/Card';
-import CardHeader from '@/components/ui/CardHeader';
-import FormInput from '@/components/ui/FormInput';
 import type { LoginProps } from '@/utils/types'; // Assuming LoginProps is defined here
 
 // Magic Context
@@ -19,6 +15,10 @@ export type Magic = MagicBase<OAuthExtension[] & FlowExtension[]>;
 type MagicContextType = {
   magic: Magic | null;
 };
+
+const Spinner = ({ className = '' }: { className?: string }) => (
+  <span className={`loading loading-spinner ${className}`.trim()} />
+);
 
 const MagicContext = createContext<MagicContextType>({
   magic: null,
@@ -98,11 +98,11 @@ const Login = ({ token, setToken }: LoginProps) => {
   };
 
   return (
-    <div className="login-page flex items-center justify-center h-screen">
-      <Card className="w-full max-w-md">
-        <CardHeader id="login">Login / Sign Up</CardHeader>
-        <div className="p-4">
-          <FormInput
+    <div className="login-page flex items-center justify-center min-h-screen bg-gradient-to-br from-primary to-secondary p-4">
+      <div className="w-full max-w-md shadow-xl bg-base-100 rounded-xl"> {/* Card 替換 */}
+        <div id="login" className="text-center text-2xl font-bold py-6">Login / Sign Up</div> {/* CardHeader 替換 */}
+        <div className="p-6 space-y-4"> {/* Increased padding and added space-y */}
+          <input
             onChange={(e) => {
               if (emailError) setEmailError(false);
               setEmail(e.target.value);
@@ -110,17 +110,18 @@ const Login = ({ token, setToken }: LoginProps) => {
             placeholder={'Enter your email'}
             value={email}
             type="email"
+            className="input input-bordered w-full" // DaisyUI input style
           />
-          {emailError && <span className="text-red-500 text-sm">Enter a valid email</span>}
+          {emailError && <span className="text-error text-xs">Enter a valid email</span>}
           <button
-            className="w-full bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded mt-4 disabled:opacity-50"
+            className="btn btn-primary w-full" // DaisyUI button style
             disabled={isLoginInProgress || email.length === 0}
             onClick={handleLogin}
           >
-            {isLoginInProgress ? <Spinner /> : 'Continue with Email'}
+            {isLoginInProgress ? <Spinner className="loading loading-spinner" /> : 'Continue with Email'}
           </button>
         </div>
-      </Card>
+      </div>
     </div>
   );
 };
@@ -147,11 +148,11 @@ const Disconnect = ({ setToken }: { setToken: (token: string) => void }) => {
 
   return (
     <button
-      className="bg-red-500 hover:bg-red-700 text-white font-bold py-2 px-4 rounded disabled:opacity-50"
+      className="btn btn-error" // DaisyUI button style
       onClick={handleDisconnect}
       disabled={disabled}
     >
-      {disabled ? <Spinner /> : 'Logout'}
+      {disabled ? <Spinner className="loading loading-spinner" /> : 'Logout'}
     </button>
   );
 };
@@ -177,14 +178,19 @@ const UserInfo = () => {
   }, [fetchMetadata]);
 
   if (!userInfo) {
-    return <Spinner />;
+    // Centered spinner for better loading UX
+    return (
+      <div className="flex justify-center items-center p-10">
+        <Spinner className="loading loading-lg" />
+      </div>
+    );
   }
 
   return (
-    <div className="p-4 bg-gray-100 rounded shadow">
-      <h3 className="text-lg font-semibold">User Information</h3>
-      <p><strong>Email:</strong> {userInfo.email}</p>
-      <p><strong>Public Address:</strong> {userInfo.publicAddress}</p>
+    <div className="bg-base-100 shadow-xl p-6 my-4 w-full max-w-md mx-auto rounded-xl"> {/* Card 替換 */}
+      <h3 className="text-xl font-bold mb-4">User Information</h3>
+      <p className="my-1 text-sm"><strong>Email:</strong> {userInfo.email}</p>
+      <p className="my-1 text-sm"><strong>Public Address:</strong> <span className="font-mono break-all">{userInfo.publicAddress}</span></p>
     </div>
   );
 };
@@ -196,10 +202,6 @@ const MagicAuth = ({ token, setToken }: LoginProps) => {
   if (!token) {
     return <Login token={token} setToken={setToken} />;
   }
-
-  // Once logged in, you might want to show user info and a disconnect button
-  // For now, let's assume Disconnect button is part of Navbar or another component
-  // Or, it can be rendered here:
   return (
     <div>
       {/* <UserInfo /> */}

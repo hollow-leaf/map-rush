@@ -1,7 +1,7 @@
 import React, { useState, useCallback, useEffect } from 'react';
 import { Link } from '@tanstack/react-router';
 import type { LoginProps } from '@/utils/types';
-import { useMagic, Disconnect, UserInfo } from '@/components/MagicAuth'; // Updated import
+import { useMagic, Disconnect, UserInfo } from '@/components/magic/MagicAuth'; // Updated import
 import * as fcl from '@onflow/fcl';
 import { convertAccountBalance } from '@/utils/flowUtils';
 

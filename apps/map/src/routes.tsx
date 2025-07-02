@@ -2,7 +2,7 @@ import { RootRoute, Route, Router } from '@tanstack/react-router';
 import App from './App';
 import Home from './pages/Home';
 import MyKartList from './pages/MyKartList';
-import { Login, UserInfo } from '@/components/MagicAuth'; // Assuming Login and UserInfo might be separate routes or handled within App
+import { Login, UserInfo } from '@/components/magic/MagicAuth'; // Assuming Login and UserInfo might be separate routes or handled within App
 
 // Create a root route
 const rootRoute = new RootRoute({
