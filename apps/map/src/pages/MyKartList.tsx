@@ -1,5 +1,6 @@
 import React, { useEffect } from 'react';
 import { useMagic } from '@/components/magic/MagicAuth'; // Updated import path for useMagic
+import NFTMarketplace from '@/components/NFTMarketplace'; // Import the new component
 
 const KartListComponent = () => {
     return <div className="p-4">My Karts will be listed here.</div>;
@@ -27,7 +28,8 @@ const MyKartList: React.FC = () => {
 
     return (
         <div className="container mx-auto p-4">
-            <h1 className="text-2xl font-bold mb-4">My Kart Collection</h1>
+            <NFTMarketplace /> {/* Add the NFTMarketplace component here */}
+            <h1 className="text-2xl font-bold mt-8 mb-4">My Kart Collection</h1> {/* Add margin top for separation */}
             <KartListComponent />
         </div>
     );
