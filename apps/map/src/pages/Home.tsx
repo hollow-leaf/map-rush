@@ -81,7 +81,7 @@ const Home: React.FC = () => {
       <ModelSelector onSelectModel={handleModelSelect} currentModelUrl={selectedModelUrl} />
 
       {/* Babylon Scene as a centered overlay */}
-      <div className="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 w-[300px] h-[250px] z-[5]">
+      <div className="absolute top-1/2 left-1/4 transform -translate-x-1/2 -translate-y-1/2 w-[300px] h-[250px] z-[5]">
         <BabylonScene modelUrl={selectedModelUrl} />
       </div>
 

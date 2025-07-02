@@ -17,9 +17,9 @@ export default function MapComponent({ onMapReady }: { onMapReady: (map: maplibr
       container: mapContainer.current,
       style: 'https://demotiles.maplibre.org/style.json',
       center: [-74.006, 40.7128], // New York City
-      zoom: 15,
-      pitch: 60,
-      bearing: -17.6,
+      zoom: 19,
+      pitch: 90,
+      bearing: 0,
       antialias: true,
     });
 
