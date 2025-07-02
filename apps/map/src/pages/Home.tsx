@@ -2,22 +2,10 @@ import { useRef, useState, useCallback, useEffect } from 'react';
 import maplibregl from 'maplibre-gl';
 import '../App.css'
 import MapComponent from '@/components/map/MapComponent'
-// Navbar is now part of App.tsx layout
-// import Navbar from '@/components/Navbar' 
 import BabylonScene from '@/components/BabylonScene';
 import Joystick from '@/components/Joystick';
 import ModelSelector from '@/components/ModelSelector'; // Import ModelSelector
 
-// LoginProps, MagicProvider, ToastContainer, Login, MagicDashboardRedirect are not needed here
-// as authentication and layout are handled by App.tsx and router
-// import type { LoginProps } from '@/utils/types'
-// import MagicProvider from '@/components/magic/MagicProvider'
-// import { ToastContainer } from 'react-toastify'
-// import 'react-toastify/dist/ReactToastify.css'
-// import Login from '@/components/magic/Login'
-// import MagicDashboardRedirect from '@/components/magic/MagicDashboardRedirect'
-
-// const Home: React.FC<LoginProps> = ({ token, setToken }) => {
 const Home: React.FC = () => {
 
   const mapRef = useRef<maplibregl.Map | null>(null);
@@ -88,10 +76,7 @@ const Home: React.FC = () => {
 
   // The conditional rendering based on token is removed as App.tsx handles this
   return (
-    // <Dashboard token={token} setToken={setToken} />
-    // The outer div for h-[100vh] w-[100vw] is now in App.tsx
-    // This component should only render its specific content
-    <div className="flex-grow relative"> {/* Map container takes full space */}
+    <div className="flex flex-col h-[100vh] w-[100vw] overflow-hidden">
       <MapComponent onMapReady={handleMapReady} />
       <ModelSelector onSelectModel={handleModelSelect} currentModelUrl={selectedModelUrl} />
 

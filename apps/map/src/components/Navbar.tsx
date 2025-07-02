@@ -3,8 +3,6 @@ import type { LoginProps } from '@/utils/types'
 import { useMagic, Disconnect } from '@/components/MagicAuth'; // Updated import
 import * as fcl from '@onflow/fcl'
 import { convertAccountBalance } from '@/utils/flowUtils'
-// logout is now part of Disconnect component / MagicAuth
-// import { logout } from '@/utils/common' 
 
 const Navbar: React.FC<LoginProps> = ({ token, setToken }) => {
   const [isOpen, setIsOpen] = useState(false);
