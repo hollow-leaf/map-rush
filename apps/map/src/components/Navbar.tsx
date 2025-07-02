@@ -1,109 +1,119 @@
 import React, { useState, useCallback, useEffect } from 'react';
-import type { LoginProps } from '@/utils/types'
-import { useMagic, Disconnect } from '@/components/MagicAuth'; // Updated import
-import * as fcl from '@onflow/fcl'
-import { convertAccountBalance } from '@/utils/flowUtils'
+import { Link } from '@tanstack/react-router';
+import type { LoginProps } from '@/utils/types';
+import { useMagic, Disconnect, UserInfo } from '@/components/MagicAuth'; // Updated import
+import * as fcl from '@onflow/fcl';
+import { convertAccountBalance } from '@/utils/flowUtils';
 
-const Navbar: React.FC<LoginProps> = ({ token, setToken }) => {
+interface NavbarProps extends LoginProps {
+  toggleTheme: () => void;
+  currentTheme: string;
+}
+
+const Navbar: React.FC<NavbarProps> = ({ token, setToken, toggleTheme, currentTheme }) => {
   const [isOpen, setIsOpen] = useState(false);
-  const [balance, setBalance] = useState('...')
+  const [balance, setBalance] = useState('...');
+  const [publicAddress, setPublicAddress] = useState<string | null>(localStorage.getItem('user'));
+  const [userEmoji, setUserEmoji] = useState('👤'); // Default emoji
 
-  const [publicAddress, setPublicAddress] = useState(
-    localStorage.getItem('user')
-  )
-  const [isRefreshing, setIsRefreshing] = useState(false)
-
-  const { magic } = useMagic()
+  const { magic } = useMagic();
 
   useEffect(() => {
-    const checkLoginandGetBalance = async () => {
-      const isLoggedIn = await magic?.user.isLoggedIn()
-      if (isLoggedIn) {
+    const fetchUserInfo = async () => {
+      if (magic && token) {
         try {
-          const metadata = await magic?.user.getInfo()
-          if (metadata) {
-            localStorage.setItem('user', metadata?.publicAddress!)
-            setPublicAddress(metadata?.publicAddress!)
+          const metadata = await magic.user.getInfo();
+          if (metadata?.publicAddress) {
+            localStorage.setItem('user', metadata.publicAddress);
+            setPublicAddress(metadata.publicAddress);
+            // Placeholder for emoji logic - can be expanded
+            if (metadata.email?.startsWith('a')) setUserEmoji('😊');
+            else setUserEmoji('😎');
           }
         } catch (e) {
-          console.log('error in fetching address: ' + e)
+          console.log('error in fetching address: ' + e);
         }
       }
-    }
-    setTimeout(() => checkLoginandGetBalance(), 5000)
-  }, [])
+    };
+    fetchUserInfo();
+  }, [magic, token]);
 
   const getBalance = useCallback(async () => {
     if (publicAddress) {
-      const account = await fcl.account(publicAddress)
-      setBalance(convertAccountBalance(account.balance))
+      try {
+        const account = await fcl.account(publicAddress);
+        setBalance(convertAccountBalance(account.balance));
+      } catch (error) {
+        console.error("Failed to get balance:", error);
+        setBalance('N/A');
+      }
     }
-  }, [magic, publicAddress])
+  }, [publicAddress]);
 
-  const refresh = useCallback(async () => {
-    setIsRefreshing(true)
-    await getBalance()
-    setTimeout(() => {
-      setIsRefreshing(false)
-    }, 500)
-  }, [getBalance])
+  useEffect(() => {
+    if (token) {
+      getBalance();
+    }
+  }, [token, getBalance]);
 
-  // Disconnect logic is now handled by the Disconnect component from MagicAuth
-  // const disconnect = useCallback(async () => {
-  //   if (magic) {
-  //     await logout(setToken, magic)
-  //   }
-  // }, [magic, setToken])
 
   return (
-    <nav className="bg-gray-800 text-white p-4">
-      <div className="container mx-auto flex justify-between items-center">
-        <div className="text-xl font-bold">Logo</div>
-        {/* Hamburger button for mobile */}
-        <div className="md:hidden">
-          <button onClick={() => setIsOpen(!isOpen)}>
-            <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d={isOpen ? "M6 18L18 6M6 6l12 12" : "M4 6h16M4 12h16m-7 6h7"}></path>
-            </svg>
-          </button>
-        </div>
-        {/* Menu for larger screens */}
-        <ul className="hidden md:flex space-x-4" style={{ padding: '0px' }}>
-          <li>
-            <span className="text-gray-300 cursor-default">
-              {publicAddress ? `${publicAddress.slice(0, 6)}...${publicAddress.slice(-4)}` : 'Not Connected'}
-            </span>
-          </li>
-          <li><a href="/" className="hover:text-gray-400">Home</a></li>
-          <li><a href="/my-kart-list" className="hover:text-gray-400">MyKarts</a></li>
-          {/* <li><a href="#" className="hover:text-gray-400">Contact</a></li> */}
-          {token && (
-            <li>
-              <Disconnect setToken={setToken} />
-            </li>
-          )}
-        </ul>
+    <nav className="navbar bg-base-100 shadow-md">
+      <div className="navbar-start">
+        <Link to="/" className="btn btn-ghost text-xl">
+          KartApp 🏎️
+        </Link>
       </div>
-      {/* Collapsible menu for mobile */}
-      {isOpen && (
-        <div className="md:hidden mt-2">
-          <ul className="flex flex-col space-y-2">
-            <li>
-              <span className="text-gray-300 block px-2 py-1">
-                {publicAddress ? `${publicAddress.slice(0, 6)}...${publicAddress.slice(-4)}` : 'Not Connected'}
-              </span>
-            </li>
-            <li><a href="/" className="hover:text-gray-400 block px-2 py-1">Home</a></li>
-            <li><a href="/my-kart-list" className="hover:text-gray-400 block px-2 py-1">MyKarts</a></li>
-            {/* <li><a href="#" className="hover:text-gray-400 block px-2 py-1">Contact</a></li> */}
-            {token && (
-            <li className="px-2 py-1">
-              <Disconnect setToken={setToken} />
-            </li>
-          )}
+
+      <div className="navbar-end">
+        {/* Theme Toggle */}
+        <button className="btn btn-ghost btn-circle" onClick={toggleTheme}>
+          {currentTheme === 'light' ? '🌙' : '☀️'}
+        </button>
+
+        {token ? (
+          <div className="dropdown dropdown-end">
+            <label tabIndex={0} className="btn btn-ghost btn-circle avatar">
+              <div className="w-10 rounded-full ring ring-primary ring-offset-base-100 ring-offset-2">
+                {/* Placeholder for actual image, using emoji for now */}
+                <span className="text-2xl">{userEmoji}</span>
+              </div>
+            </label>
+            <ul tabIndex={0} className="menu menu-sm dropdown-content mt-3 z-[1] p-2 shadow bg-base-100 rounded-box w-52">
+              <li>
+                <span className="justify-between">
+                  Profile
+                  <span className="badge"> {publicAddress ? `${publicAddress.slice(0, 4)}...${publicAddress.slice(-3)}` : 'N/A'}</span>
+                </span>
+              </li>
+              <li><a>Flow Balance: {balance}</a></li>
+              <li><Link to="/my-kart-list">My Karts</Link></li>
+              <li><a onClick={() => getBalance()}>Refresh Balance</a></li>
+              <li>
+                <Disconnect setToken={setToken} />
+              </li>
+            </ul>
+          </div>
+        ) : (
+          <Link to="/about" className="btn btn-ghost"> 
+            {/* Changed to /about which is the implicit login route by tanstack router, or adjust as needed */}
+            Login
+          </Link>
+        )}
+
+        {/* Mobile Menu Button - DaisyUI handles this, but we can customize if needed */}
+        <div className="dropdown dropdown-end md:hidden">
+          <label tabIndex={0} className="btn btn-ghost md:hidden">
+            <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M4 6h16M4 12h8m-8 6h16" /></svg>
+          </label>
+          <ul tabIndex={0} className="menu menu-sm dropdown-content mt-3 z-[1] p-2 shadow bg-base-100 rounded-box w-52">
+            {/* Replicate links for mobile if not covered by the user dropdown */}
+            {!token && <li><Link to="/about">Login</Link></li>}
+            <li><button onClick={toggleTheme}>{currentTheme === 'light' ? 'Dark Mode' : 'Light Mode'}</button></li>
+            {/* Add other mobile-specific links if necessary */}
           </ul>
         </div>
-      )}
+      </div>
     </nav>
   );
 };

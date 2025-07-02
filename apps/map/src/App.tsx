@@ -8,6 +8,7 @@ import Navbar from './components/Navbar';
 
 function App() {
   const [token, setToken] = useState(localStorage.getItem('token') ?? '');
+  const [theme, setTheme] = useState(localStorage.getItem('theme') || 'light');
 
   useEffect(() => {
     // Update token state if localStorage changes (e.g., after login/logout)
@@ -20,12 +21,21 @@ function App() {
     };
   }, []);
 
+  useEffect(() => {
+    document.documentElement.setAttribute('data-theme', theme);
+    localStorage.setItem('theme', theme);
+  }, [theme]);
+
+  const toggleTheme = () => {
+    setTheme(theme === 'light' ? 'dark' : 'light');
+  };
+
   return (
     <MagicProvider>
       <ToastContainer />
       {token.length > 0 ? (
         <div className="flex flex-col h-[100vh] w-[100vw] overflow-hidden">
-          <Navbar token={token} setToken={setToken} />
+          <Navbar token={token} setToken={setToken} toggleTheme={toggleTheme} currentTheme={theme} />
           <div className="flex-grow overflow-auto"> 
             <Outlet />
           </div>
