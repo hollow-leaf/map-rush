@@ -7,8 +7,8 @@ export class BabylonCamera {
     private carModel: AbstractMesh | null = null; // Reference to the car model for targeting
 
     public activeCameraView: 'sky' | 'ground' = 'sky'; // Default view
-    private groundViewOffset = new Vector3(0, 1, -3); // Halved distance
-    private skyViewOffset = new Vector3(0, 5, -5); // Halved distance
+    private groundViewOffset = new Vector3(0, 1, -2); // Halved distance
+    private skyViewOffset = new Vector3(0, 5, -1); // Halved distance
 
     constructor(scene: Scene, canvas: HTMLCanvasElement) {
         this.scene = scene;

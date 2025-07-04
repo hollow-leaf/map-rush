@@ -13,12 +13,10 @@ const ModelSelector: React.FC<ModelSelectorProps> = ({ onSelectModel, currentMod
   const models = [
     { name: DEFAULT_MODEL_NAME, url: null },
     { name: CAR_MODEL_NAME, url: CAR_MODEL_URL },
-    // Add more models here if needed
-    // { name: "Another Model", url: "path/to/another/model.gltf" },
   ];
 
   return (
-    <div className="absolute top-[70px] left-[10px] bg-white bg-opacity-80 p-[10px] rounded-[5px] z-10 flex flex-col gap-[8px]">
+    <div className="absolute top-[70px] left-[10px] bg-opacity-30 p-[10px] rounded-[5px] z-10 flex flex-col gap-[8px]" data-theme="light">
       <h4 className="text-sm font-semibold">Select Model:</h4>
       {models.map((model) => {
         const isActive = currentModelUrl === model.url || (currentModelUrl === null && model.url === null);

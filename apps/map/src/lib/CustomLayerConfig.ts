@@ -26,8 +26,8 @@ export const defaultCustomLayerSettings: CustomLayerSettings = {
     {
       url: 'https://maplibre.org/maplibre-gl-js/docs/assets/34M_17/34M_17.gltf', // Default car model
       baseScale: { x: 1.5, y: 1.5, z: 1.5 },
-      positionOffset: { x: 0, y: 0.5, z: 0 }, // Move up slightly on Y-axis
-      rotationOffset: { x: 0, y: 45, z: 0 },   // Rotate 45 degrees around Y-axis
+      positionOffset: { x: 0, y: 0, z: 0 }, // Move up slightly on Y-axis
+      rotationOffset: { x: 0, y: 0, z: 0 },   // Rotate 45 degrees around Y-axis
       worldOrigin: [-74.006, 40.7128], // Default origin from example
       worldAltitude: 0, // Default altitude from example
     },
