@@ -1,9 +1,10 @@
 import React, { useEffect } from 'react';
 import { useMagic } from '@/components/magic/MagicAuth'; // Updated import path for useMagic
 import NFTMarketplace from '@/components/NFTMarketplace'; // Import the new component
-import KartList from '@/components/kart-nft/KartList';
+import KartCollection from '@/components/kart-nft/KartCollection';
+import KartWorkshop from '@/components/kart-nft/KartWorkshop';
 
-const MyKartList: React.FC = () => {
+const KartGarage: React.FC = () => {
     const { magic } = useMagic(); // Still might need magic for user-specific data
 
     useEffect(() => {
@@ -16,7 +17,7 @@ const MyKartList: React.FC = () => {
                         // Potentially trigger a state update if publicAddress is used directly in this component's render
                     }
                 } catch (e) {
-                    console.log('Error fetching user info in MyKartList: ' + e);
+                    console.log('Error fetching user info in KartGarage: ' + e);
                 }
             }
         };
@@ -25,11 +26,10 @@ const MyKartList: React.FC = () => {
 
     return (
         <div className="container mx-auto p-4">
-            <NFTMarketplace /> {/* Add the NFTMarketplace component here */}
-            <h1 className="text-2xl font-bold mt-8 mb-4">My Kart Collection</h1> {/* Add margin top for separation */}
-            <KartList publicAddress={localStorage.getItem('user')} />
+            <KartWorkshop />
+            <KartCollection publicAddress={localStorage.getItem('user')} />
         </div>
     );
 };
 
-export default MyKartList;
+export default KartGarage;

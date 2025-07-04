@@ -1,7 +1,7 @@
 import { RootRoute, Route, Router } from '@tanstack/react-router';
 import App from './App';
 import Home from './pages/Home';
-import MyKartList from './pages/MyKartList';
+import KartGarage from './pages/KartGarage';
 import { Login, UserInfo } from '@/components/magic/MagicAuth'; // Assuming Login and UserInfo might be separate routes or handled within App
 import About from './pages/About';
 
@@ -17,10 +17,10 @@ const indexRoute = new Route({
   component: Home,
 });
 
-const myKartListRoute = new Route({
+const kartGarageRoute = new Route({
   getParentRoute: () => rootRoute,
-  path: '/my-kart-list',
-  component: MyKartList,
+  path: '/kart-garage',
+  component: KartGarage,
 });
 
 const aboutRoute = new Route({
@@ -32,8 +32,8 @@ const aboutRoute = new Route({
 // Create the route tree
 const routeTree = rootRoute.addChildren([
   indexRoute,
-  myKartListRoute,
-  aboutRoute
+  aboutRoute,
+  kartGarageRoute
 ]);
 
 // Create the router instance
