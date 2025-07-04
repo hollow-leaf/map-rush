@@ -87,7 +87,7 @@ const Navbar: React.FC<NavbarProps> = ({ token, setToken, toggleTheme, currentTh
                 </span>
               </li>
               <li><a>Flow Balance: {balance}</a></li>
-              <li><Link to="/my-kart-list">My Karts</Link></li>
+              <li><Link to="/kart-garage">Kart Garage</Link></li>
               <li><a onClick={() => getBalance()}>Refresh Balance</a></li>
               <li>
                 <Disconnect setToken={setToken} />
@@ -95,7 +95,7 @@ const Navbar: React.FC<NavbarProps> = ({ token, setToken, toggleTheme, currentTh
             </ul>
           </div>
         ) : (
-          <Link to="/about" className="btn btn-ghost"> 
+          <Link to="/about" className="btn btn-ghost">
             {/* Changed to /about which is the implicit login route by tanstack router, or adjust as needed */}
             Login
           </Link>

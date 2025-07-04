@@ -13,6 +13,7 @@
     "@babylonjs/core": "^7.11.0",
     "@babylonjs/loaders": "^7.11.0",
     "@magic-ext/flow": "^24.1.0",
+    "@magic-ext/oauth": "^23.1.0",
     "@onflow/fcl": "^1.19.0",
     "@tailwindcss/vite": "^4.1.10",
     "@tanstack/react-router": "^1.124.0",

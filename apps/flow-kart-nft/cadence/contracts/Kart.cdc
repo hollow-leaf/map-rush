@@ -33,7 +33,7 @@ access(all) contract Kart: NonFungibleToken {
             self.id = self.uuid
             self.speed = speed
             // Assign model based on speed
-            self.model = self.getModelBySpeed(speed)
+            self.model = "https://maplibre.org/maplibre-gl-js/docs/assets/34M_17/34M_17.gltf"
         }
 
         access(all) fun createEmptyCollection(): @{NonFungibleToken.Collection} {
