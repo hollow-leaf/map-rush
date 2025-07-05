@@ -56,13 +56,13 @@ export const MagicProvider = ({ children }: { children: React.ReactNode }) => {
 };
 
 // Login Component
-const Login = ({ token, setToken }: LoginProps) => {
+const Login = ({ setToken }: LoginProps) => {
   const { magic } = useMagic();
   const [email, setEmail] = useState('');
   const [emailError, setEmailError] = useState(false);
   const [isLoginInProgress, setLoginInProgress] = useState(false);
 
-  if (!token) return
+
   const handleLogin = async () => {
     if (!email.match(/^[a-zA-Z0-9.!#$%&'*+/=?^_`{|}~-]+@[a-zA-Z0-9-]+(?:\.[a-zA-Z0-9-]+)*$/)) {
       setEmailError(true);
