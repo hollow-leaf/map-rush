@@ -1,7 +1,7 @@
 import React, { useState, useCallback, useEffect } from 'react';
 import { Link } from '@tanstack/react-router';
 import type { LoginProps } from '@/utils/types';
-import { useMagic, Disconnect, UserInfo } from '@/components/magic/MagicAuth'; // Updated import
+import { useMagic, Disconnect } from '@/components/magic/MagicAuth'; // Updated import
 import * as fcl from '@onflow/fcl';
 import { convertAccountBalance } from '@/utils/flowUtils';
 
@@ -11,7 +11,6 @@ interface NavbarProps extends LoginProps {
 }
 
 const Navbar: React.FC<NavbarProps> = ({ token, setToken, toggleTheme, currentTheme }) => {
-  const [isOpen, setIsOpen] = useState(false);
   const [balance, setBalance] = useState('...');
   const [publicAddress, setPublicAddress] = useState<string | null>(localStorage.getItem('user'));
   const [userEmoji, setUserEmoji] = useState('👤'); // Default emoji

@@ -1,5 +1,5 @@
 import { useRef, useEffect } from 'react';
-import maplibregl, { LngLatLike } from 'maplibre-gl';
+import maplibregl, { type LngLatLike } from 'maplibre-gl';
 import 'maplibre-gl/dist/maplibre-gl.css';
 import BabylonLayerImpl from './BabylonMapLayer';
 import { useMapStore, updateStoreFromMap } from '../../store/mapStore';
@@ -36,7 +36,7 @@ export default function MapComponent({ onMapReady }: { onMapReady: (map: maplibr
       const babylonCustomLayer = new BabylonLayerImpl(layerId, modelConfigIdx);
       babylonLayerRef.current = babylonCustomLayer;
 
-      mapRef.current.addLayer(babylonCustomLayer);
+      mapRef.current.addLayer(babylonCustomLayer as any);
       console.log("Babylon custom layer added to map.");
 
       const layers = mapRef.current.getStyle().layers;
@@ -100,8 +100,9 @@ export default function MapComponent({ onMapReady }: { onMapReady: (map: maplibr
     // Only call map methods if the values actually differ, to prevent potential loops
     // and unnecessary map operations.
     const currentMapCenter = map.getCenter().toArray() as [number, number];
-    if (center[0] !== currentMapCenter[0] || center[1] !== currentMapCenter[1]) {
-      map.setCenter(center);
+    const centerArray = center as [number, number];
+    if (centerArray[0] !== currentMapCenter[0] || centerArray[1] !== currentMapCenter[1]) {
+      map.setCenter(centerArray);
     }
     if (map.getZoom() !== zoom) {
       map.setZoom(zoom);

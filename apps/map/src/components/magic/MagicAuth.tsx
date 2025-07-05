@@ -62,6 +62,7 @@ const Login = ({ token, setToken }: LoginProps) => {
   const [emailError, setEmailError] = useState(false);
   const [isLoginInProgress, setLoginInProgress] = useState(false);
 
+  if (!token) return
   const handleLogin = async () => {
     if (!email.match(/^[a-zA-Z0-9.!#$%&'*+/=?^_`{|}~-]+@[a-zA-Z0-9-]+(?:\.[a-zA-Z0-9-]+)*$/)) {
       setEmailError(true);
@@ -136,7 +137,7 @@ const Disconnect = ({ setToken }: { setToken: (token: string) => void }) => {
     if (!magic) return;
     try {
       setDisabled(true);
-      await logout(setToken, magic); // logout utility needs to be checked for compatibility
+      await logout(setToken as any, magic); // logout utility needs to be checked for compatibility
       setDisabled(false);
       showToast({ message: 'Logged out successfully', type: 'success' });
     } catch (error) {

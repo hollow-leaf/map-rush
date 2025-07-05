@@ -1,6 +1,5 @@
 import React, { useEffect } from 'react';
 import { useMagic } from '@/components/magic/MagicAuth'; // Updated import path for useMagic
-import NFTMarketplace from '@/components/NFTMarketplace'; // Import the new component
 import KartCollection from '@/components/kart-nft/KartCollection';
 import KartWorkshop from '@/components/kart-nft/KartWorkshop';
 

@@ -35,13 +35,6 @@ const BabylonScene: React.FC<BabylonSceneProps> = ({ modelUrl }) => {
       const ground = MeshBuilder.CreateGround("ground", { width: 20, height: 20 }, scene);
       ground.material = new BABYLON.StandardMaterial("groundMat", scene);
       (ground.material as BABYLON.StandardMaterial).diffuseColor = new BABYLON.Color3(0.5, 0.5, 0.5);
-
-      // Placeholder obstacles - these can remain or be made dynamic later
-      const box1 = MeshBuilder.CreateBox("box1", { size: 2 }, scene);
-      box1.position = new Vector3(5, 1, 5);
-      const mat1 = new BABYLON.StandardMaterial("box1Mat", scene);
-      mat1.diffuseColor = new BABYLON.Color3(1, 0, 0); // Red
-      box1.material = mat1;
       
       engine.runRenderLoop(() => {
         scene.render();

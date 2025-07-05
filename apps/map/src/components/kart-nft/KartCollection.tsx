@@ -74,7 +74,7 @@ const KartCollection = ({ publicAddress }: { publicAddress: string | null }) => 
     const [isRefreshing, setIsRefreshing] = useState(false)
     const [kartNFTs, setKartNFTs] = useState<KartNFT[]>([])
     const [isLoadingNFTs, setIsLoadingNFTs] = useState(false)
-    const [nftError, setNftError] = useState<string | null>(null)
+    // const [nftError, setNftError] = useState<string | null>(null)
 
     const { magic } = useMagic(); // Still might need magic for user-specific data
 
@@ -114,7 +114,7 @@ const KartCollection = ({ publicAddress }: { publicAddress: string | null }) => 
         if (!publicAddress) return
 
         setIsLoadingNFTs(true)
-        setNftError(null)
+        // setNftError(null)
 
         try {
             // Configure FCL for testnet
@@ -145,7 +145,7 @@ const KartCollection = ({ publicAddress }: { publicAddress: string | null }) => 
             }
         } catch (err) {
             console.error('Error fetching Kart NFTs:', err)
-            setNftError(err instanceof Error ? err.message : 'Failed to fetch NFTs')
+            // setNftError(err instanceof Error ? err.message : 'Failed to fetch NFTs')
             setKartNFTs([])
         } finally {
             setIsLoadingNFTs(false)

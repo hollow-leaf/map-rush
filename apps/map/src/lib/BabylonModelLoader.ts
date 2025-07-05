@@ -1,4 +1,4 @@
-import { Scene, SceneLoader, AbstractMesh, Vector3, Quaternion, Tools } from '@babylonjs/core';
+import { Scene, SceneLoader, AbstractMesh, Vector3, Quaternion } from '@babylonjs/core';
 import '@babylonjs/loaders/glTF'; // For GLTF model loading
 import type { ModelConfig } from './CustomLayerConfig'; // Import ModelConfig type
 

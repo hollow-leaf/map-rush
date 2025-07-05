@@ -1,4 +1,4 @@
-import { Scene, Engine, Color4, HemisphericLight, PointLight, StandardMaterial, Color3, Vector3, MeshBuilder, AbstractMesh } from '@babylonjs/core';
+import { Scene, Engine, Color4, HemisphericLight, PointLight, Vector3, AbstractMesh } from '@babylonjs/core';
 
 export class BabylonScene {
     public instance: Scene;

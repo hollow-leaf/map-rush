@@ -1,6 +1,6 @@
 import { type CustomLayerInterface, Map as MaplibreMap, MercatorCoordinate } from 'maplibre-gl';
 // import { BabylonGame } from '../../lib/BabylonGame'; // Assuming BabylonGame is not used for now
-import { Matrix, Engine, Scene, Camera, Vector3, HemisphericLight, AxesViewer, SceneLoader, Quaternion, FreeCamera } from '@babylonjs/core';
+import { Matrix, Engine, Scene, Vector3, HemisphericLight, AxesViewer, Quaternion, FreeCamera } from '@babylonjs/core';
 import '@babylonjs/loaders/glTF'; // For GLTF model loading
 import { getModelConfig, type ModelConfig } from '../../lib/CustomLayerConfig'; // Import config
 import { BabylonModelLoader } from '../../lib/BabylonModelLoader';
@@ -73,11 +73,11 @@ export class BabylonLayerImpl implements BabylonLayerType {
         })
     }
 
-    render (gl: WebGLRenderingContext, viewProjectionMatrix: number[]) {
+    render (gl: WebGLRenderingContext, viewProjectionMatrix: any) {
         if (!this.engine || !this.scene || !this.camera || !this.map) {
             return;
         }
-
+        if (!gl) return
         const cameraMatrix = Matrix.FromArray(viewProjectionMatrix);
         
         const worldOrigin = this.modelConfig?.worldOrigin || [148.9819, -35.39847];

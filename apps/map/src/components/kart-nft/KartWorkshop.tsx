@@ -1,4 +1,4 @@
-import React, { useCallback, useEffect, useState } from 'react';
+import { useCallback, useEffect, useState } from 'react';
 import { useMagic } from '@/components/magic/MagicAuth';
 import showToast from '@/utils/showToast';
 import Spinner from '@/components/ui/Spinner';
@@ -8,8 +8,8 @@ const KartWorkshop = () => {
     const { magic } = useMagic();
     const [recipient, setRecipient] = useState('');
     const [disabled, setDisabled] = useState(true);
-    const [recipientError, setRecipientError] = useState(false);
-    const [hash, setHash] = useState('');
+    const [_1, setRecipientError] = useState(false);
+    const [_, setHash] = useState('');
     const [transactionLoading, setTransactionLoading] = useState(false);
     const [mintSuccess, setMintSuccess] = useState<string | null>(null);
     const [mintError, setMintError] = useState<string | null>(null);

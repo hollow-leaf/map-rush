@@ -3,7 +3,7 @@ import { FreeCamera, Vector3, Scene, AbstractMesh, Quaternion } from '@babylonjs
 export class BabylonCamera {
     public instance: FreeCamera | null = null;
     private scene: Scene;
-    private canvas: HTMLCanvasElement;
+    // private canvas: HTMLCanvasElement;
     private carModel: AbstractMesh | null = null; // Reference to the car model for targeting
 
     public activeCameraView: 'sky' | 'ground' = 'sky'; // Default view
@@ -12,7 +12,8 @@ export class BabylonCamera {
 
     constructor(scene: Scene, canvas: HTMLCanvasElement) {
         this.scene = scene;
-        this.canvas = canvas;
+        if (!canvas) return
+        // this.canvas = canvas;
         this.initialize();
     }
 
@@ -70,13 +71,13 @@ export class BabylonCamera {
             // console.log("  Using skyViewOffset:", cameraPositionInCarSpace.toString());
         }
 
-        const carRotation = this.carModel.rotationQuaternion ? this.carModel.rotationQuaternion : Quaternion.IdentityReadOnly;
+        const carRotation = this.carModel.rotationQuaternion ? this.carModel.rotationQuaternion : Quaternion.Identity;
         // if (!this.carModel.rotationQuaternion) {
             // console.warn("BabylonCamera: Car model does not have a rotationQuaternion. Using Identity.");
         // }
 
         const rotatedOffset = Vector3.Zero();
-        cameraPositionInCarSpace.rotateByQuaternionToRef(carRotation, rotatedOffset); 
+        cameraPositionInCarSpace.rotateByQuaternionToRef(carRotation as any, rotatedOffset); 
         
         // console.log("  Calculated rotatedOffset (world space offset from car):", rotatedOffset.toString());
 

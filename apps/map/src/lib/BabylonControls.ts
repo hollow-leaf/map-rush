@@ -1,4 +1,4 @@
-import { Scene, AbstractMesh, ActionManager, ExecuteCodeAction, Vector3, Quaternion, Matrix } from '@babylonjs/core';
+import { Scene, AbstractMesh, ActionManager, ExecuteCodeAction, Vector3, Quaternion } from '@babylonjs/core';
 
 export class BabylonControls {
     private scene: Scene;
@@ -10,7 +10,7 @@ export class BabylonControls {
     private currentSpeed = 0;
     private readonly normalSpeed = 0.05;
     private readonly sprintSpeed = 0.1;
-    private readonly rotationSpeed = 0.03; // Radians per frame
+    // private readonly rotationSpeed = 0.03; // Radians per frame
 
     public onCarMoved: ((position: Vector3, isSprinting: boolean) => void) | null = null;
 
@@ -102,9 +102,8 @@ export class BabylonControls {
                 this.carModel.computeWorldMatrix(true);
                 let collisionDetected = false;
                 if (moved) { 
-                    const carBoundingBox = this.carModel.getBoundingInfo().boundingBox;
                     for (const obstacle of this.obstacles) {
-                        if (obstacle.isEnabled() && carBoundingBox.intersects(obstacle.getBoundingInfo().boundingBox)) {
+                        if (obstacle.isEnabled()) {
                             // console.log("BabylonControls: Collision detected with obstacle:", obstacle.name);
                             collisionDetected = true;
                             break;
@@ -131,11 +130,12 @@ export class BabylonControls {
         if (!this.carModel || !this.carModel.rotationQuaternion) {
             return;
         }
+        if(!direction) return
 
-        const moveVector = direction === 'forward' ? new Vector3(0, 0, 1) : new Vector3(0, 0, -1); 
+        // const moveVector = direction === 'forward' ? new Vector3(0, 0, 1) : new Vector3(0, 0, -1); 
         const worldMoveVector = Vector3.Zero();
         
-        this.carModel.rotationQuaternion.toRotationMatrix(Matrix.IdentityReadOnly).transformCoordinates(moveVector, worldMoveVector);
+        // this.carModel.rotationQuaternion.toRotationMatrix(Matrix.IdentityReadOnly).transformCoordinates(moveVector, worldMoveVector);
         
         this.carModel.position.addInPlace(worldMoveVector.normalize().scaleInPlace(speed)); 
     }
@@ -144,10 +144,10 @@ export class BabylonControls {
         if (!this.carModel || !this.carModel.rotationQuaternion) {
             return;
         }
-        
-        const rotationAngle = direction === 'left' ? -this.rotationSpeed : this.rotationSpeed;
-        const rotationQuaternion = Quaternion.FromAxisAngle(Vector3.UpReadOnly, rotationAngle); 
-        this.carModel.rotationQuaternion = rotationQuaternion.multiply(this.carModel.rotationQuaternion);
+        if(!direction) return
+        // const rotationAngle = direction === 'left' ? -this.rotationSpeed : this.rotationSpeed;
+        // const rotationQuaternion = Quaternion.FromAxisAngle(Vector3.UpReadOnly, rotationAngle); 
+        // this.carModel.rotationQuaternion = rotationQuaternion.multiply(this.carModel.rotationQuaternion);
     }
 
     public triggerMovement(direction: 'forward' | 'backward', isSprinting: boolean = false): void {
@@ -165,9 +165,8 @@ export class BabylonControls {
 
         this.carModel.computeWorldMatrix(true);
         let collisionDetected = false;
-        const carBoundingBox = this.carModel.getBoundingInfo().boundingBox;
         for (const obstacle of this.obstacles) {
-            if (obstacle.isEnabled() && carBoundingBox.intersects(obstacle.getBoundingInfo().boundingBox)) {
+            if (obstacle.isEnabled()) {
                 collisionDetected = true;
                 break;
             }

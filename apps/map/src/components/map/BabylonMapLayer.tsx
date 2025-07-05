@@ -66,7 +66,7 @@ export class BabylonLayerImpl implements BabylonLayerType {
         }
     }
 
-    render(_gl: WebGLRenderingContext, matrix: number[]) {
+    render(_gl: WebGLRenderingContext, matrix: any) {
         if (!this.babylonGame || !this.babylonGame.getSceneInstance() || !this.babylonGame.getEngineInstance() || !this.babylonGame.getCarModel()) {
             if (this.map) this.map.triggerRepaint();
             return;

@@ -21,11 +21,11 @@ const Joystick: React.FC<JoystickProps> = ({
   const [position, setPosition] = useState({ x: 0, y: 0 });
   const baseRef = useRef<HTMLDivElement>(null);
 
-  const handleInteractionStart = (event: React.MouseEvent | React.TouchEvent) => {
+  const handleInteractionStart = () => {
     setIsDragging(true);
     // No need to move stick on start, it will be calculated in handleInteractionMove
   };
-
+  
   const handleInteractionMove = (event: MouseEvent | TouchEvent) => {
     if (!isDragging || !baseRef.current) return;
 

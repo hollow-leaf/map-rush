@@ -1,5 +1,5 @@
 import { create } from 'zustand';
-import { LngLatLike } from 'maplibre-gl';
+import { type LngLatLike } from 'maplibre-gl';
 
 interface MapState {
   center: LngLatLike;

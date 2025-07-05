@@ -1,7 +1,8 @@
-export enum Network {
-  FLOW_MAINNET = 'flow-mainnet',
-  FLOW_TESTNET = 'flow-testnet',
-}
+export const Network = {
+  FLOW_MAINNET: 'flow-mainnet',
+  FLOW_TESTNET: 'flow-testnet',
+} as const;
+type Network = typeof Network[keyof typeof Network];
 
 export const getNetworkUrl = () => {
   switch (import.meta.env.VITE_BLOCKCHAIN_NETWORK) {
